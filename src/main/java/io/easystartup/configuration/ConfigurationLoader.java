@@ -340,4 +340,7 @@ public class ConfigurationLoader {
         return errors;
     }
 
+    public MainSettings getSettings() {
+        return this.settings;
+    }
 }

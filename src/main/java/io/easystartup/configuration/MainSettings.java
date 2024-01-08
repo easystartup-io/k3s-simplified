@@ -38,6 +38,9 @@ public class MainSettings {
     @JsonProperty("image")
     private String image ="ubuntu-22.04";
 
+    @JsonProperty("additional_packages")
+    private String[] additionalPackages;
+
     @JsonProperty("snapshot_od")
     private String snapshotOs ="default";
 
@@ -373,5 +376,13 @@ public class MainSettings {
 
     public void setExistingNetworkName(String existingNetworkName) {
         this.existingNetworkName = existingNetworkName;
+    }
+
+    public String[] getAdditionalPackages() {
+        return additionalPackages;
+    }
+
+    public void setAdditionalPackages(String[] additionalPackages) {
+        this.additionalPackages = additionalPackages;
     }
 }

@@ -9,9 +9,10 @@ import java.io.InputStream;
  * @author indianBond
  */
 public class TemplateUtil {
+    public static final String CLOUD_INIT_YAML_PATH = "templates/cloud_init.yaml";
 
-    private String getTemplateFile(String file){
-        InputStream resourceAsStream = this.getClass().getResourceAsStream(file);
+    public static String getTemplateFile(String file){
+        InputStream resourceAsStream = TemplateUtil.class.getResourceAsStream(file);
         try {
             return IOUtils.toString(resourceAsStream);
         } catch (IOException e) {

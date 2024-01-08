@@ -26,7 +26,7 @@ public class NodePool {
     private KeyValuePair[] taints;
 
     @JsonProperty("image")
-    private Long image;
+    private String image;
 
 
     @JsonProperty("post_create_commands")
@@ -77,11 +77,11 @@ public class NodePool {
         this.labels = value;
     }
 
-    public Long getImage() {
+    public String getImage() {
         return image;
     }
 
-    public void setImage(Long value) {
+    public void setImage(String value) {
         this.image = value;
     }
 

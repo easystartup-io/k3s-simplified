@@ -61,6 +61,7 @@ public class Main {
             for (String error : configurationLoader.getErrors()) {
                 System.out.println(error);
             }
+            new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
         }
     }
 
