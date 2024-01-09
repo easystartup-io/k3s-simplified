@@ -50,6 +50,9 @@ public class MainSettings {
     @JsonProperty("private_network_subnet")
     private String privateNetworkSubnet = "10.0.0.0/16";
 
+    @JsonProperty("private_api_load_balancer")
+    private boolean privateApiLoadBalancer;
+
     @JsonProperty("cluster_cidr")
     private String clusterCIDR = "10.244.0.0/16";
 
@@ -384,5 +387,13 @@ public class MainSettings {
 
     public void setAdditionalPackages(String[] additionalPackages) {
         this.additionalPackages = additionalPackages;
+    }
+
+    public boolean isPrivateApiLoadBalancer() {
+        return privateApiLoadBalancer;
+    }
+
+    public void setPrivateApiLoadBalancer(boolean privateApiLoadBalancer) {
+        this.privateApiLoadBalancer = privateApiLoadBalancer;
     }
 }

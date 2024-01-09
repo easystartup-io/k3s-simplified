@@ -4,17 +4,22 @@ import io.easystartup.utils.TemplateUtil;
 import me.tomsdevsn.hetznercloud.HetznerCloudAPI;
 import me.tomsdevsn.hetznercloud.objects.enums.PlacementGroupType;
 import me.tomsdevsn.hetznercloud.objects.enums.SubnetType;
+import me.tomsdevsn.hetznercloud.objects.enums.TargetType;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import me.tomsdevsn.hetznercloud.objects.request.*;
 import me.tomsdevsn.hetznercloud.objects.response.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static io.easystartup.utils.Util.sleep;
 
 /*
  * @author indianBond
@@ -261,8 +266,29 @@ public class HetznerClient {
                         .enableIPv6(enablePublicNetIpv6)
                         .build());
         CreateServerResponse server = hetznerCloudAPI.createServer(builder.build());
+
+        waitForServerCreation(serverName);
+
         return server.getServer();
     }
+
+    private void waitForServerCreation(String serverName) {
+        long tic = System.currentTimeMillis();
+        while (true) {
+            Server server = findServer(serverName);
+            if (CollectionUtils.isNotEmpty(server.getPrivateNet()) &&
+                    StringUtils.isNotBlank(server.getPrivateNet().getFirst().getIp())) {
+                break;
+            }
+            sleep(2000);
+            long tac = System.currentTimeMillis();
+            // Ideally shouldn't take so long to setup server
+            if ((tac - tic) > TimeUnit.MINUTES.toMillis(10)) {
+                break;
+            }
+        }
+    }
+
 
     private static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
         return TemplateUtil.getTemplateFile(TemplateUtil.CLOUD_INIT_YAML_PATH)
@@ -326,5 +352,37 @@ public class HetznerClient {
         return packages.stream()
                 .map(packageName -> "'" + packageName + "'")
                 .collect(Collectors.joining(", "));
+    }
+
+    public LoadBalancer createK8sAPILoadBalancer(String clusterName, Long networkId, boolean privateApiLoadBalancer, String location) {
+        CreateLoadBalancerRequest.CreateLoadBalancerRequestBuilder builder = CreateLoadBalancerRequest.builder();
+        builder.loadBalancerType("lb11");
+        builder.location(location);
+        builder.name(clusterName + "-api");
+        builder.network(networkId);
+        builder.publicInterface(!privateApiLoadBalancer);
+
+        LBService lbService = new LBService();
+        lbService.setDestinationPort(6443L);
+        lbService.setListenPort(6443L);
+        lbService.setProtocol("tcp");
+        lbService.setProxyprotocol(false);
+        builder.services(List.of(lbService));
+
+        LBTarget lbTarget = new LBTarget();
+        lbTarget.setType(TargetType.label_selector);
+        lbTarget.setLabelSelector(new LBTargetLabelSelector("cluster=" + clusterName + ",role=master"));
+        lbTarget.setUsePrivateIp(true);
+        builder.targets(List.of(lbTarget));
+
+        builder.algorithm(new CreateLoadBalancerRequestAlgorithmType("round_robin"));
+        LoadBalancerResponse loadBalancer = hetznerCloudAPI.createLoadBalancer(builder.build());
+        return loadBalancer.getLoadBalancer();
+    }
+
+    public LoadBalancer findLoadBalancer(String loadBalancerName) {
+        LoadBalancersResponse loadBalancers = hetznerCloudAPI.getLoadBalancers();
+        Optional<LoadBalancer> first = loadBalancers.getLoadBalancers().stream().filter(loadBalancer -> loadBalancer.getName().equals(loadBalancerName)).findFirst();
+        return first.orElse(null);
     }
 }

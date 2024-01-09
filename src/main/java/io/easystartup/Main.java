@@ -49,7 +49,7 @@ public class Main {
         }
     }
 
-    @Command(name = "crete", description = "# Create a cluster")
+    @Command(name = "create", description = "# Create a cluster")
     public static class CreateCluster implements Runnable {
         @CommandLine.Option(names = {"-c", "--config"}, required = true, description = "# The path of the YAML configuration file")
         private String config;

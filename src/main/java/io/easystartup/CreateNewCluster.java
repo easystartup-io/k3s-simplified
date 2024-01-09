@@ -2,19 +2,36 @@ package io.easystartup;
 
 import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.configuration.MainSettings;
+import io.easystartup.configuration.NodePool;
+import io.easystartup.installer.KubernetesInstaller;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static io.easystartup.utils.Util.sleep;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /*
  * @author indianBond
  */
 public class CreateNewCluster {
+
+    public enum ServerType {
+        MASTER,
+        WORKER
+    }
+
+    private static final int MAX_INSTANCES_PER_PLACEMENT_GROUP = 10;
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
+    private LoadBalancer loadBalancer;
+    private final Map<ServerType, List<Server>> serverMap = new ConcurrentHashMap();
 
     private Network network;
     private Firewall firewall;
@@ -31,27 +48,122 @@ public class CreateNewCluster {
         firewall = createFirewall();
         sshKey = createSSH();
 
-        createServers();
-        createLoadBalancer();
+        createServers(serverMap);
+        loadBalancer = createLoadBalancer();
+
+        KubernetesInstaller kubernetesInstaller = new KubernetesInstaller(mainSettings, hetznerClient, loadBalancer, serverMap, network, firewall, sshKey);
+        kubernetesInstaller.startInstallation();
     }
 
-    private void createLoadBalancer() {
-
+    private LoadBalancer createLoadBalancer() {
+        if (mainSettings.getMastersPool().getInstanceCount() == 1) {
+            return null;
+        }
+        String loadBalancerName = mainSettings.getClusterName() + "-api";
+        LoadBalancer loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
+        if (loadBalancer != null) {
+            System.out.println("Load balancer for API server already exists, skipping.");
+            return loadBalancer;
+        }
+        System.out.println("Creating load balancer for API server...");
+        loadBalancer = hetznerClient.createK8sAPILoadBalancer(mainSettings.getClusterName(),
+                network.getId(),
+                mainSettings.isPrivateApiLoadBalancer(),
+                mainSettings.getMastersPool().getLocation()
+        );
+        if (!mainSettings.isPrivateApiLoadBalancer()) {
+            while (true) {
+                loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
+                if (loadBalancer != null && StringUtils.isNotBlank(loadBalancer.getPublicIpv4())) {
+                    break;
+                }
+                sleep(2000);
+            }
+        }
+        System.out.println("Done");
+        return loadBalancer;
     }
 
-    private void createServers() {
-        List<Server> serverList = new ArrayList<>();
 
-        initializeMasters(serverList);
-        initializeWorkerNodes(serverList);
+    private void createServers(Map<ServerType, List<Server>> serverList) {
+        for (ServerType value : ServerType.values()) {
+            serverList.putIfAbsent(value, new CopyOnWriteArrayList<>());
+        }
+        initializeMasters(serverList.get(ServerType.MASTER));
+        initializeWorkerNodes(serverList.get(ServerType.WORKER));
     }
 
     private void initializeWorkerNodes(List<Server> serverList) {
+        NodePool[] workerNodePools = mainSettings.getWorkerNodePools();
 
+        List<NodePool> noAutoscalingWorkerNodePools = Arrays.stream(workerNodePools).toList().stream()
+                .filter(nodePool -> !(nodePool.getAutoScaling() != null && nodePool.getAutoScaling().isEnabled()))
+                .toList();
+
+        for (NodePool nodePool : noAutoscalingWorkerNodePools) {
+            List<PlacementGroup> placementGroups = createPlacementGroupsForNodePool(nodePool);
+            for (int index = 0; index < nodePool.getInstanceCount(); index++) {
+                PlacementGroup placementGroup = placementGroups.get(index % placementGroups.size());
+                Server serverCreator = createWorkerServer(index, nodePool, placementGroup);
+                serverList.add(serverCreator);
+            }
+        }
+    }
+
+    private Server createWorkerServer(int index, NodePool nodePool, PlacementGroup placementGroup) {
+        String clusterName = mainSettings.getClusterName();
+        String instanceType = nodePool.getInstanceType();
+        String nodeName = String.format("%s-%s-pool-%s-worker%s", clusterName, instanceType, nodePool.getName(), index + 1);
+        String image = isBlank(nodePool.getImage()) ? mainSettings.getImage() : nodePool.getImage();
+        String[] additionalPackages = nodePool.getAdditionalPackages() == null ?
+                mainSettings.getAdditionalPackages() : nodePool.getAdditionalPackages();
+        String[] postCreateCommands = nodePool.getPostCreateCommands() == null ?
+                mainSettings.getPostCreateCommands() : nodePool.getPostCreateCommands();
+        String location = nodePool.getLocation();
+        Server server = hetznerClient.findServer(nodeName);
+        if (server != null) {
+            System.out.println("Server " + nodeName + " already exists, skipping.");
+            return server;
+        }
+        System.out.println("Creating server " + nodeName + "...");
+        server = hetznerClient.createServer(
+                clusterName,
+                instanceType,
+                nodeName,
+                image,
+                additionalPackages == null ? List.of() : Arrays.stream(additionalPackages).toList(),
+                postCreateCommands == null ? List.of() : Arrays.stream(postCreateCommands).toList(),
+                firewall,
+                network,
+                sshKey,
+                placementGroup,
+                mainSettings.isEnablePublicNetIpv4(),
+                mainSettings.isEnablePublicNetIpv6(),
+                location,
+                mainSettings.getSnapshotOs(),
+                mainSettings.getSshPort(),
+                "worker"
+        );
+        System.out.println("...server " + nodeName + " created.");
+        return server;
+    }
+
+    private List<PlacementGroup> createPlacementGroupsForNodePool(NodePool nodePool) {
+        int placementGroupsCount = (int) Math.ceil((double) nodePool.getInstanceCount() / MAX_INSTANCES_PER_PLACEMENT_GROUP);
+        List<PlacementGroup> placementGroups = new ArrayList<>();
+
+        for (int index = 1; index <= placementGroupsCount; index++) {
+            String placementGroupName = mainSettings.getClusterName() + "-" + nodePool.getName() + "-" + index;
+            PlacementGroup placementGroup = createPlacementGroup(placementGroupName);
+            placementGroups.add(placementGroup);
+        }
+
+        return placementGroups;
     }
 
     private void initializeMasters(List<Server> serverList) {
-        PlacementGroup placementGroup = createPlacementGroup();
+        String placementGroupName = mainSettings.getClusterName() + "-masters";
+        PlacementGroup placementGroup = createPlacementGroup(placementGroupName);
 
         long instanceCount = mainSettings.getMastersPool().getInstanceCount();
         for (int i = 0; i < instanceCount; i++) {
@@ -111,15 +223,14 @@ public class CreateNewCluster {
         return postCreateCommands == null ? mainSettings.getPostCreateCommands() : postCreateCommands;
     }
 
-    private PlacementGroup createPlacementGroup() {
-        String name = mainSettings.getClusterName() + "-masters";
-        PlacementGroup placementGroup = hetznerClient.findPlacementGroup(name);
+    private PlacementGroup createPlacementGroup(String placementGroupName) {
+        PlacementGroup placementGroup = hetznerClient.findPlacementGroup(placementGroupName);
         if (placementGroup != null) {
-            System.out.println("Placement group " + name + " already exists, skipping.");
+            System.out.println("Placement group " + placementGroupName + " already exists, skipping.");
             return placementGroup;
         }
-        System.out.println("Creating placement group " + name + "...");
-        placementGroup = hetznerClient.createPlacementGroup(name);
+        System.out.println("Creating placement group " + placementGroupName + "...");
+        placementGroup = hetznerClient.createPlacementGroup(placementGroupName);
         System.out.println("done creating " + placementGroup.getName());
         return placementGroup;
     }
@@ -179,4 +290,5 @@ public class CreateNewCluster {
         Location hetznerLocation = hetznerClient.getLocation(location);
         return hetznerClient.createNetwork(networkName, privateNetworkSubnet, hetznerLocation.getNetworkZone());
     }
+
 }
