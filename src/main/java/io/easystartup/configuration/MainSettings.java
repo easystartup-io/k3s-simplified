@@ -68,6 +68,27 @@ public class MainSettings {
     @JsonProperty("enable_public_net_ipv6")
     private boolean enablePublicNetIpv6 = true;
 
+    @JsonProperty("enable_encryption")
+    private boolean enableEncryption;
+
+    @JsonProperty("kube_api_server_args")
+    private String[] kubeApiServerArgs;
+
+    @JsonProperty("kube_scheduler_args")
+    private String[] kubeSchedulerArgs;
+
+    @JsonProperty("kube_controller_manager_args")
+    private String[] kubeControllerManagerArgs;
+
+    @JsonProperty("kube_cloud_controller_manager_args")
+    private String[] kubeCloudControllerManagerArgs;
+
+    @JsonProperty("kubelet_args")
+    private String[] kubeletArgs;
+
+    @JsonProperty("kube_proxy_args")
+    private String[] kubeProxyArgs;
+
     @JsonProperty("api_server_hostname")
     private String apiServerHostname;
 
@@ -395,5 +416,61 @@ public class MainSettings {
 
     public void setPrivateApiLoadBalancer(boolean privateApiLoadBalancer) {
         this.privateApiLoadBalancer = privateApiLoadBalancer;
+    }
+
+    public boolean isEnableEncryption() {
+        return enableEncryption;
+    }
+
+    public void setEnableEncryption(boolean enableEncryption) {
+        this.enableEncryption = enableEncryption;
+    }
+
+    public String[] getKubeApiServerArgs() {
+        return kubeApiServerArgs;
+    }
+
+    public void setKubeApiServerArgs(String[] kubeApiServerArgs) {
+        this.kubeApiServerArgs = kubeApiServerArgs;
+    }
+
+    public String[] getKubeSchedulerArgs() {
+        return kubeSchedulerArgs;
+    }
+
+    public void setKubeSchedulerArgs(String[] kubeSchedulerArgs) {
+        this.kubeSchedulerArgs = kubeSchedulerArgs;
+    }
+
+    public String[] getKubeControllerManagerArgs() {
+        return kubeControllerManagerArgs;
+    }
+
+    public void setKubeControllerManagerArgs(String[] kubeControllerManagerArgs) {
+        this.kubeControllerManagerArgs = kubeControllerManagerArgs;
+    }
+
+    public String[] getKubeCloudControllerManagerArgs() {
+        return kubeCloudControllerManagerArgs;
+    }
+
+    public void setKubeCloudControllerManagerArgs(String[] kubeCloudControllerManagerArgs) {
+        this.kubeCloudControllerManagerArgs = kubeCloudControllerManagerArgs;
+    }
+
+    public String[] getKubeletArgs() {
+        return kubeletArgs;
+    }
+
+    public void setKubeletArgs(String[] kubeletArgs) {
+        this.kubeletArgs = kubeletArgs;
+    }
+
+    public String[] getKubeProxyArgs() {
+        return kubeProxyArgs;
+    }
+
+    public void setKubeProxyArgs(String[] kubeProxyArgs) {
+        this.kubeProxyArgs = kubeProxyArgs;
     }
 }

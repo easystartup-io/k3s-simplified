@@ -25,6 +25,8 @@ dependencies {
 
     implementation files('libs/hetznercloud-api-3.2.0.jar')
 
+    implementation group: 'com.hubspot.jinjava', name: 'jinjava', version: '2.7.1'
+
 //    implementation "me.tomsdevsn:hetznercloud-api:3.1.0"
 
     // Command line arg processor

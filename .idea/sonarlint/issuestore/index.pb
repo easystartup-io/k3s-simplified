@@ -56,3 +56,9 @@ e
 5src/main/java/io/easystartup/utils/ValidatorUtil.java,2/a/2a5d6b589c82c20e35ca155b5f1b8340942092fd
 b
 2src/main/java/io/easystartup/CreateNewCluster.java,3/c/3c04d1356fa9edd48e693fca4bd791bf149cfb95
+o
+?src/main/java/io/easystartup/installer/KubernetesInstaller.java,6/7/67898c8b086484a3a13e0b6a30fffffbebc1775b
+_
+/src/main/java/io/easystartup/utils/SSHUtil.java,d/e/de50e507afd22d51dc76587436676c64a289e9c8
+h
+8src/main/java/io/easystartup/utils/FreemarkerConfig.java,1/3/13ea2ce879339fe593547db0e440d263d292687d
