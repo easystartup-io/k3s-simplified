@@ -290,7 +290,7 @@ public class HetznerClient {
     }
 
 
-    private static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
+    public static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
         Map<String, Object> data = new HashMap<>();
         data.put("ssh_port", Integer.toString(sshPort));
         data.put("eth1_str", eth1(snapshotOs));

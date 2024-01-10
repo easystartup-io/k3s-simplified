@@ -6,7 +6,7 @@ import io.easystartup.configuration.AutoScaling;
 import io.easystartup.configuration.KeyValuePair;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
-import io.easystartup.utils.SSHUtil;
+import io.easystartup.utils.SSH;
 import io.easystartup.utils.ShellUtil;
 import io.easystartup.utils.TemplateUtil;
 import io.easystartup.utils.Util;
@@ -33,7 +33,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static io.easystartup.cloud.hetzner.HetznerClient.*;
+import static io.easystartup.cloud.hetzner.HetznerClient.cloudInit;
 import static io.easystartup.utils.Util.sleep;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -48,6 +48,8 @@ public class KubernetesInstaller {
     private final LoadBalancer loadBalancer;
     private final Map<CreateNewCluster.ServerType, List<Server>> servers;
 
+    private final SSH ssh;
+
     private final Network network;
     private final Firewall firewall;
     private final SSHKey sshKey;
@@ -60,6 +62,8 @@ public class KubernetesInstaller {
         this.network = network;
         this.firewall = firewall;
         this.sshKey = sshKey;
+
+        this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
     }
 
 
@@ -91,7 +95,7 @@ public class KubernetesInstaller {
     private void setUpFirstMaster(Server firstMaster) {
         System.out.println("Deploying k3s to first master " + firstMaster.getName() + "...");
 
-        String output = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), masterInstallScript(firstMaster, true), mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), masterInstallScript(firstMaster, true), mainSettings.isUseSSHAgent());
 
         System.out.println("Waiting for the control plane to be ready...");
 
@@ -107,7 +111,7 @@ public class KubernetesInstaller {
         String command = "cat /etc/rancher/k3s/k3s.yaml";
 
         // Execute the command via SSH and store the output (kubeconfig content)
-        String kubeconfigContent = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String kubeconfigContent = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
         String apiServerHostname = isNotBlank(mainSettings.getAPIServerHostname()) ? mainSettings.getAPIServerHostname() : getApiServerIpAddress();
         // Replace the server address placeholder with the actual API server address
@@ -190,13 +194,13 @@ public class KubernetesInstaller {
 
     private void deployK3sToOtherMasters(Server master) {
         System.out.println("Deploying k3s to master " + master.getName() + "...");
-        SSHUtil.ssh(master, mainSettings.getSshPort(), masterInstallScript(master, false), mainSettings.isUseSSHAgent());
+        ssh.ssh(master, mainSettings.getSshPort(), masterInstallScript(master, false), mainSettings.isUseSSHAgent());
         System.out.println("...k3s has been deployed to master " + master.getName() + ".");
     }
 
     private void deployK3sToWorker(Server worker, String k3sToken) {
         System.out.println("Deploying k3s to worker " + worker.getName() + "...");
-        SSHUtil.ssh(worker, mainSettings.getSshPort(), workerInstallScript(k3sToken), mainSettings.isUseSSHAgent());
+        ssh.ssh(worker, mainSettings.getSshPort(), workerInstallScript(k3sToken), mainSettings.isUseSSHAgent());
         System.out.println("...k3s has been deployed to worker " + worker.getName() + ".");
     }
 
@@ -302,7 +306,13 @@ public class KubernetesInstaller {
         String k3sJoinScript = "|\\n    " + workerInstallScript(k3sToken).replace("\n", "\\n    ");
 
         // Assuming cloudInit method is implemented to create cloud-init for Hetzner Server
-        String cloudInit = cloudInit(mainSettings.getSshPort(), mainSettings.getSnapshotOs(), Arrays.stream(mainSettings.getAdditionalPackages()).toList(), Arrays.stream(mainSettings.getPostCreateCommands()).toList(), List.of(k3sJoinScript));
+        String cloudInit = cloudInit(
+                mainSettings.getSshPort(),
+                mainSettings.getSnapshotOs(),
+                getAdditionalPackages(),
+                getAdditionalPostCreateCommands(),
+                List.of(k3sJoinScript)
+        );
 
         String certificatePath = checkCertificatePath(firstMaster);
         Map<String, Object> dataModel = new HashMap<>();
@@ -335,25 +345,29 @@ public class KubernetesInstaller {
         System.out.println("...Cluster Autoscaler deployed.");
     }
 
+    private List<String> getAdditionalPostCreateCommands() {
+        if (mainSettings.getPostCreateCommands() == null || mainSettings.getPostCreateCommands().length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(mainSettings.getPostCreateCommands()).toList();
+    }
+
+    private List<String> getAdditionalPackages() {
+        if (mainSettings.getAdditionalPackages() == null || mainSettings.getAdditionalPackages().length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(mainSettings.getAdditionalPackages()).toList();
+    }
+
     private String checkCertificatePath(Server firstMaster) {
         String checkCommand = "[ -f /etc/ssl/certs/ca-certificates.crt ] && echo 1 || echo 2";
-        String result = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), checkCommand, mainSettings.isUseSSHAgent());
+        String result = ssh.ssh(firstMaster, mainSettings.getSshPort(), checkCommand, mainSettings.isUseSSHAgent());
 
         if ("1".equals(result.trim())) {
             return "/etc/ssl/certs/ca-certificates.crt";
         } else {
             return "/etc/ssl/certs/ca-bundle.crt";
         }
-    }
-
-    private static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("ssh_port", Integer.toString(sshPort));
-        data.put("eth1_str", eth1(snapshotOs));
-        data.put("growpart_str", growpart(snapshotOs));
-        data.put("packages_str", generatePackagesStr(snapshotOs, additionalPackages));
-        data.put("post_create_commands_str", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
-        return TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
     }
 
     public void addLabelsAndTaintsToMasters() {
@@ -492,7 +506,7 @@ public class KubernetesInstaller {
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
         Server firstMaster = serverList.getFirst();
         String command = "cat /var/lib/rancher/k3s/server/node-token";
-        String token = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String token = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
         if (token == null || token.isEmpty()) {
             token = new BigInteger(130, new SecureRandom()).toString(32); // Random token generation
@@ -573,6 +587,9 @@ public class KubernetesInstaller {
     }
 
     private String buildArgsList(String component, String[] args) {
+        if (args == null || args.length == 0) {
+            return "";
+        }
         return Arrays.stream(args)
                 .map(arg -> " --" + component + "-arg=\"" + arg + "\" ")
                 .collect(Collectors.joining());
