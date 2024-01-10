@@ -38,6 +38,9 @@ public class MainSettings {
     @JsonProperty("image")
     private String image ="ubuntu-22.04";
 
+    @JsonProperty("autoscaling_image")
+    private String autoScalingImage;
+
     @JsonProperty("additional_packages")
     private String[] additionalPackages;
 
@@ -472,5 +475,13 @@ public class MainSettings {
 
     public void setKubeProxyArgs(String[] kubeProxyArgs) {
         this.kubeProxyArgs = kubeProxyArgs;
+    }
+
+    public String getAutoScalingImage() {
+        return autoScalingImage;
+    }
+
+    public void setAutoScalingImage(String autoScalingImage) {
+        this.autoScalingImage = autoScalingImage;
     }
 }

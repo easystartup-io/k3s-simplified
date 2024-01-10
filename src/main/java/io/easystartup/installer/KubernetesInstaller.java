@@ -2,15 +2,28 @@ package io.easystartup.installer;
 
 import io.easystartup.CreateNewCluster;
 import io.easystartup.cloud.hetzner.HetznerClient;
+import io.easystartup.configuration.AutoScaling;
+import io.easystartup.configuration.KeyValuePair;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.utils.SSHUtil;
+import io.easystartup.utils.ShellUtil;
 import io.easystartup.utils.TemplateUtil;
+import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.*;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -20,8 +33,10 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static io.easystartup.cloud.hetzner.HetznerClient.*;
 import static io.easystartup.utils.Util.sleep;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /*
@@ -54,7 +69,10 @@ public class KubernetesInstaller {
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
         setUpFirstMaster(serverList.getFirst());
         setUpOtherMasters(serverList);
-        setUpWorkers(servers.get(CreateNewCluster.ServerType.WORKER));
+
+        String k3sToken = getK3sToken();
+
+        setUpWorkers(servers.get(CreateNewCluster.ServerType.WORKER), k3sToken);
 
         System.out.println("\n=== Deploying Hetzner drivers ===\n");
 
@@ -67,7 +85,7 @@ public class KubernetesInstaller {
         deployCloudControllerManager();
         deployCsiDriver();
         deploySystemUpgradeController();
-        deployClusterAutoscaler();
+        deployClusterAutoscaler(k3sToken);
     }
 
     private void setUpFirstMaster(Server firstMaster) {
@@ -77,13 +95,53 @@ public class KubernetesInstaller {
 
         System.out.println("Waiting for the control plane to be ready...");
 
-        sleep(10000); // Sleep for 10 seconds
+        sleep(10_000); // Sleep for 10 seconds
 
-        saveKubeconfig();
+        saveKubeconfig(firstMaster);
 
         System.out.println("...k3s has been deployed to first master " + firstMaster.getName() + " and the control plane is up.");
     }
 
+    public void saveKubeconfig(Server firstMaster) {
+        // Command to get the kubeconfig content from the master server
+        String command = "cat /etc/rancher/k3s/k3s.yaml";
+
+        // Execute the command via SSH and store the output (kubeconfig content)
+        String kubeconfigContent = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+
+        String apiServerHostname = isNotBlank(mainSettings.getAPIServerHostname()) ? mainSettings.getAPIServerHostname() : getApiServerIpAddress();
+        // Replace the server address placeholder with the actual API server address
+        kubeconfigContent = kubeconfigContent.replace("127.0.0.1", apiServerHostname);
+        kubeconfigContent = kubeconfigContent.replace("default", mainSettings.getClusterName());
+
+        // Define the local path where the kubeconfig file will be saved
+        String kubeconfigPath = mainSettings.getKubeconfigPath();
+
+        // Save the kubeconfig content to a file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(kubeconfigPath))) {
+            writer.write(kubeconfigContent);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Set file permissions (optional, based on your security requirements)
+        setFilePermissions(kubeconfigPath, "600");
+
+        System.out.println("Kubeconfig saved to " + kubeconfigPath);
+    }
+
+    private void setFilePermissions(String path, String permissions) {
+        try {
+            Path filePath = Paths.get(path);
+            Set<PosixFilePermission> perms = PosixFilePermissions.fromString(permissions);
+
+            Files.setPosixFilePermissions(filePath, perms);
+            System.out.println("Set permissions " + permissions + " on " + path);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Failed to set file permissions for " + path);
+        }
+    }
     private void setUpOtherMasters(List<Server> masters) {
         if (masters.size() < 2) {
             return;
@@ -92,7 +150,7 @@ public class KubernetesInstaller {
         List<Future<?>> futures = new ArrayList<>();
 
         for (Server master : masters.subList(1, masters.size())) {
-            futures.add(executor.submit(() -> deployK3sToMaster(master)));
+            futures.add(executor.submit(() -> deployK3sToOtherMasters(master)));
         }
 
         // Wait for all tasks to complete
@@ -107,7 +165,7 @@ public class KubernetesInstaller {
         executor.shutdown();
     }
 
-    private void setUpWorkers(List<Server> workers) {
+    private void setUpWorkers(List<Server> workers, String k3sToken) {
         if (CollectionUtils.isEmpty(workers)){
             return;
         }
@@ -115,7 +173,7 @@ public class KubernetesInstaller {
         List<Future<?>> futures = new ArrayList<>();
 
         for (Server worker : workers) {
-            futures.add(executor.submit(() -> deployK3sToWorker(worker)));
+            futures.add(executor.submit(() -> deployK3sToWorker(worker, k3sToken)));
         }
 
         // Wait for all tasks to complete
@@ -130,25 +188,28 @@ public class KubernetesInstaller {
         executor.shutdown();
     }
 
-    private void deployK3sToMaster(Server master) {
+    private void deployK3sToOtherMasters(Server master) {
         System.out.println("Deploying k3s to master " + master.getName() + "...");
-        SSHUtil.ssh(master, mainSettings.getSshPort(), masterInstallScript(master), mainSettings.isUseSSHAgent());
+        SSHUtil.ssh(master, mainSettings.getSshPort(), masterInstallScript(master, false), mainSettings.isUseSSHAgent());
         System.out.println("...k3s has been deployed to master " + master.getName() + ".");
     }
 
-    private void deployK3sToWorker(Server worker) {
+    private void deployK3sToWorker(Server worker, String k3sToken) {
         System.out.println("Deploying k3s to worker " + worker.getName() + "...");
-        ssh.run(worker, mainSettings.getSshPort(), workerInstallScript(), mainSettings.isUseSSHAgent());
+        SSHUtil.ssh(worker, mainSettings.getSshPort(), workerInstallScript(k3sToken), mainSettings.isUseSSHAgent());
         System.out.println("...k3s has been deployed to worker " + worker.getName() + ".");
     }
 
     private void createHetznerCloudSecret() {
         System.out.println("\nCreating secret for Hetzner Cloud token...");
 
-        String secretManifest = renderTemplate(HETZNER_CLOUD_SECRET_MANIFEST, settings.getHetznerToken());
-        String command = buildKubectlApplyCommand(secretManifest);
+        Map<String, Object> cloudSecretData = new HashMap<>();
+        cloudSecretData.put("network", isNotBlank(mainSettings.getExistingNetworkName()) ? mainSettings.getExistingNetworkName() : mainSettings.getClusterName());
+        cloudSecretData.put("token", mainSettings.getHetznerToken());
+        String secretManifest = TemplateUtil.renderTemplate(TemplateUtil.HETZNER_CLOUD_SECRET_MANIFEST, cloudSecretData);
+        String command = "kubectl apply -f - <<EOF\n" + secretManifest + "\nEOF";
 
-        SSHUtil.ShellResult result = SSHUtil.ssh(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+        ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
 
         if (!result.isSuccess()) {
             System.out.println("Failed to create Hetzner Cloud secret:");
@@ -163,14 +224,14 @@ public class KubernetesInstaller {
         System.out.println("\nDeploying Hetzner Cloud Controller Manager...");
 
         try {
-            String ccmManifest = downloadManifest(settings.getCloudControllerManagerManifestUrl());
-            ccmManifest = ccmManifest.replace("--cluster-cidr=[^\"+]", "--cluster-cidr=" + settings.getClusterCidr());
+            String ccmManifest = downloadCCMManifest(mainSettings.getCloudControllerManagerManifestURL());
+            ccmManifest = ccmManifest.replaceAll("--cluster-cidr=[^\"]+", "--cluster-cidr=" + mainSettings.getClusterCIDR());
 
             String ccmManifestPath = "/tmp/ccm_manifest.yaml";
-            writeFile(ccmManifestPath, ccmManifest);
+            Files.writeString(Paths.get(ccmManifestPath), ccmManifest);
 
             String command = "kubectl apply -f " + ccmManifestPath;
-            ShellResult result = Util.shellRun(command, configuration.getKubeconfigPath(), settings.getHetznerToken());
+            ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
 
             if (!result.isSuccess()) {
                 System.out.println("Failed to deploy Cloud Controller Manager:");
@@ -187,8 +248,8 @@ public class KubernetesInstaller {
     private void deployCsiDriver() {
         System.out.println("\nDeploying Hetzner CSI Driver...");
 
-        String command = "kubectl apply -f " + settings.getCsiDriverManifestUrl();
-        ShellResult result = Util.shellRun(command, configuration.getKubeconfigPath(), settings.getHetznerToken());
+        String command = "kubectl apply -f " + mainSettings.getCSIDriverManifestURL();
+        ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
 
         if (!result.isSuccess()) {
             System.out.println("Failed to deploy CSI Driver:");
@@ -202,8 +263,8 @@ public class KubernetesInstaller {
     private void deploySystemUpgradeController() {
         System.out.println("\nDeploying k3s System Upgrade Controller...");
 
-        String command = "kubectl apply -f " + settings.getSystemUpgradeControllerManifestUrl();
-        ShellResult result = Util.shellRun(command, configuration.getKubeconfigPath(), settings.getHetznerToken());
+        String command = "kubectl apply -f " + mainSettings.getSystemUpgradeControllerManifestURL();
+        ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
 
         if (!result.isSuccess()) {
             System.out.println("Failed to deploy k3s System Upgrade Controller:");
@@ -214,47 +275,123 @@ public class KubernetesInstaller {
         System.out.println("...k3s System Upgrade Controller deployed.");
     }
 
-    private void deployClusterAutoscaler() {
+    private void deployClusterAutoscaler(String k3sToken) {
         System.out.println("\nDeploying Cluster Autoscaler...");
+        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        Server firstMaster = serverList.getFirst();
 
-        if (autoscalingWorkerNodePools.isEmpty()) {
+        NodePool[] workerNodePools = mainSettings.getWorkerNodePools();
+        if (workerNodePools == null || workerNodePools.length == 0) {
+            return;
+        }
+        Set<NodePool> autoScalingWorkerNodePools = Arrays.stream(workerNodePools).filter(val -> val.getAutoScaling() != null && val.getAutoScaling().isEnabled()).collect(Collectors.toSet());
+
+        if (CollectionUtils.isEmpty(autoScalingWorkerNodePools)) {
             return;
         }
 
+        String nodePoolArgs = autoScalingWorkerNodePools.stream()
+                .map(pool -> {
+                    AutoScaling autoScaling = pool.getAutoScaling();
+                    return "- --nodes=" + autoScaling.getMinInstances() + ":" + autoScaling.getMaxInstances() +
+                            ":" + pool.getInstanceType().toUpperCase() + ":" + pool.getLocation().toUpperCase() +
+                            ":" + pool.getName();
+                })
+                .collect(Collectors.joining("\n            "));
+
+        String k3sJoinScript = "|\\n    " + workerInstallScript(k3sToken).replace("\n", "\\n    ");
+
+        // Assuming cloudInit method is implemented to create cloud-init for Hetzner Server
+        String cloudInit = cloudInit(mainSettings.getSshPort(), mainSettings.getSnapshotOs(), Arrays.stream(mainSettings.getAdditionalPackages()).toList(), Arrays.stream(mainSettings.getPostCreateCommands()).toList(), List.of(k3sJoinScript));
+
+        String certificatePath = checkCertificatePath(firstMaster);
+        Map<String, Object> dataModel = new HashMap<>();
+        dataModel.put("node_pool_args", nodePoolArgs);
+        dataModel.put("cloud_init", Base64.getEncoder().encodeToString(cloudInit.getBytes()));
+        dataModel.put("image", isBlank(mainSettings.getAutoScalingImage()) ? mainSettings.getImage() : mainSettings.getAutoScalingImage());
+        dataModel.put("firewall_name", mainSettings.getClusterName());
+        dataModel.put("ssh_key_name", mainSettings.getClusterName());
+        dataModel.put("network_name", mainSettings.getClusterName());
+        dataModel.put("certificate_path", certificatePath);
+
+        String clusterAutoscalerManifest = TemplateUtil.renderTemplate(TemplateUtil.CLUSTER_AUTOSCALER_MANIFEST, dataModel);
+
+        String clusterAutoscalerManifestPath = "/tmp/cluster_autoscaler_manifest.yaml";
         try {
-            String nodePoolArgs = buildNodePoolArgs(autoscalingWorkerNodePools);
-            String clusterAutoscalerManifest = renderTemplate(CLUSTER_AUTOSCALER_MANIFEST, nodePoolArgs);
-            String clusterAutoscalerManifestPath = "/tmp/cluster_autoscaler_manifest.yaml";
-
-            writeFile(clusterAutoscalerManifestPath, clusterAutoscalerManifest);
-
-            String command = "kubectl apply -f " + clusterAutoscalerManifestPath;
-            ShellResult result = Util.shellRun(command, configuration.getKubeconfigPath(), settings.getHetznerToken());
-
-            if (!result.isSuccess()) {
-                System.out.println("Failed to deploy Cluster Autoscaler:");
-                System.out.println(result);
-                throw new RuntimeException("Failed to deploy Cluster Autoscaler");
-            }
+            Files.writeString(Paths.get(clusterAutoscalerManifestPath), clusterAutoscalerManifest);
         } catch (IOException e) {
-            throw new RuntimeException("Error in deploying Cluster Autoscaler", e);
+            throw new RuntimeException(e);
+        }
+
+        String command = "kubectl apply -f " + clusterAutoscalerManifestPath;
+        ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+
+        if (!result.isSuccess()) {
+            System.out.println("Failed to deploy Cluster Autoscaler:");
+            System.out.println(result.getOutput());
+            System.exit(1);
         }
 
         System.out.println("...Cluster Autoscaler deployed.");
     }
 
-    private void addLabelsAndTaintsToMasters() {
-        System.out.println("\nAdding labels and taints to masters...");
+    private String checkCertificatePath(Server firstMaster) {
+        String checkCommand = "[ -f /etc/ssl/certs/ca-certificates.crt ] && echo 1 || echo 2";
+        String result = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), checkCommand, mainSettings.isUseSSHAgent());
 
-        String nodeNames = masters.stream().map(Server::getName).collect(Collectors.joining(" "));
-        String allMarks = settings.getMastersPool().getLabels().stream()
+        if ("1".equals(result.trim())) {
+            return "/etc/ssl/certs/ca-certificates.crt";
+        } else {
+            return "/etc/ssl/certs/ca-bundle.crt";
+        }
+    }
+
+    private static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("ssh_port", Integer.toString(sshPort));
+        data.put("eth1_str", eth1(snapshotOs));
+        data.put("growpart_str", growpart(snapshotOs));
+        data.put("packages_str", generatePackagesStr(snapshotOs, additionalPackages));
+        data.put("post_create_commands_str", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
+        return TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
+    }
+
+    public void addLabelsAndTaintsToMasters() {
+        List<Server> masters = servers.get(CreateNewCluster.ServerType.MASTER);
+        KeyValuePair[] labels = mainSettings.getMastersPool().getLabels();
+        KeyValuePair[] taints = mainSettings.getMastersPool().getTaints();
+
+        //Todo: Dont make multiple requests, single request should handle for all masters
+        for (Server master : masters) {
+            applyLabels(master.getName(), labels);
+            applyTaints(master.getName(), taints);
+        }
+    }
+
+    private void applyLabels(String nodeName, KeyValuePair[] labels) {
+        if (labels == null || labels.length == 0) {
+            return;
+        }
+        String labelString = Arrays.stream(labels)
                 .map(label -> label.getKey() + "=" + label.getValue())
-                .collect(Collectors.joining(" "));
+                .collect(Collectors.joining(","));
+        if (!labelString.isEmpty()) {
+            System.out.println("Adding label to " + nodeName);
+            String command = "kubectl label nodes " + nodeName + " " + labelString + " --overwrite";
+            ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+        }
+    }
 
-        String command = "kubectl label --overwrite nodes " + nodeNames + " " + allMarks;
-        Util.shellRun(command, configuration.getKubeconfigPath(), settings.getHetznerToken());
-
-        System.out.println("...done.");
+    private void applyTaints(String nodeName, KeyValuePair[] taints) {
+        if (taints == null || taints.length == 0) {
+            return;
+        }
+        Arrays.stream(taints).forEach(taint -> {
+            System.out.println("Adding taint to " + nodeName);
+            String taintString = taint.getKey() + "=" + taint.getValue();
+            String command = "kubectl taint nodes " + nodeName + " " + taintString + " --overwrite";
+            ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+        });
     }
 
     private void addLabelsAndTaintsToWorkers() {
@@ -271,15 +408,35 @@ public class KubernetesInstaller {
                     .collect(Collectors.toList());
 
             String nodeNames = nodes.stream().map(Server::getName).collect(Collectors.joining(" "));
-            String allMarks = Arrays.stream(nodePool.getLabels())
-                    .map(label -> label.getKey() + "=" + label.getValue())
-                    .collect(Collectors.joining(" "));
-
-            String command = "kubectl label --overwrite nodes " + nodeNames + " " + allMarks;
-            Util.shellRun(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+            addLabelsToWorkers(nodePool, nodeNames);
+            addTaintsToWorkers(nodePool, nodeNames);
         }
 
         System.out.println("...done.");
+    }
+
+    private void addTaintsToWorkers(NodePool nodePool, String nodeNames) {
+        if (nodePool.getTaints() == null || nodePool.getTaints().length == 0) {
+            return;
+        }
+        String allMarks = Arrays.stream(nodePool.getTaints())
+                .map(taint -> taint.getKey() + "=" + taint.getValue())
+                .collect(Collectors.joining(" "));
+
+        String command = "kubectl taint --overwrite nodes " + nodeNames + " " + allMarks;
+        ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+    }
+
+    private void addLabelsToWorkers(NodePool nodePool, String nodeNames) {
+        if (nodePool.getLabels() == null || nodePool.getLabels().length == 0) {
+            return;
+        }
+        String allMarks = Arrays.stream(nodePool.getLabels())
+                .map(label -> label.getKey() + "=" + label.getValue())
+                .collect(Collectors.joining(" "));
+
+        String command = "kubectl label --overwrite nodes " + nodeNames + " " + allMarks;
+        ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
     }
 
     private String generateTlsSans() {
@@ -328,14 +485,14 @@ public class KubernetesInstaller {
         map.put("cluster_cidr", mainSettings.getClusterCIDR());
         map.put("service_cidr", mainSettings.getServiceCIDR());
         map.put("cluster_dns", mainSettings.getClusterDNS());
-        TemplateUtil.renderTemplate(TemplateUtil.MASTER_INSTALL_SCRIPT, map);
+        return TemplateUtil.renderTemplate(TemplateUtil.MASTER_INSTALL_SCRIPT, map);
     }
 
     private String getK3sToken() {
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
         Server firstMaster = serverList.getFirst();
         String command = "cat /var/lib/rancher/k3s/server/node-token";
-        String token = sshUtil.executeCommand(getHostIp(firstMaster), mainSettings.getSshPort(), mainSettings.isUseSSHAgent(), mainSettings.getPrivateSSHKeyPath(), command);
+        String token = SSHUtil.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
         if (token == null || token.isEmpty()) {
             token = new BigInteger(130, new SecureRandom()).toString(32); // Random token generation
@@ -370,10 +527,19 @@ public class KubernetesInstaller {
         return null;
     }
 
-    private String workerInstallScript() {
-        // Template rendering logic goes here
-        // Placeholder for rendered script
-        return "Rendered Worker Install Script";
+    private String workerInstallScript(String k3sToken) {
+
+        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        Server firstMaster = serverList.getFirst();
+        String firstMasterPrivateIp = firstMaster.getPrivateNet().getFirst().getIp();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("cluster_name", mainSettings.getClusterName());
+        data.put("k3s_token", k3sToken);
+        data.put("k3s_version", mainSettings.getK3SVersion());
+        data.put("first_master_private_ip_address", firstMasterPrivateIp);
+        data.put("private_network_test_ip", getPrivateNetworkTestIp(mainSettings.getPrivateNetworkSubnet()));
+        return TemplateUtil.renderTemplate(TemplateUtil.WORKER_INSTALL_SCRIPT, data);
     }
 
     private String findFlannelBackend() {
@@ -410,5 +576,22 @@ public class KubernetesInstaller {
         return Arrays.stream(args)
                 .map(arg -> " --" + component + "-arg=\"" + arg + "\" ")
                 .collect(Collectors.joining());
+    }
+
+    private String downloadCCMManifest(String urlString) throws IOException {
+        URL url = new URL(urlString);
+        HttpURLConnection con = (HttpURLConnection) url.openConnection();
+        con.setRequestMethod("GET");
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line).append("\n");
+            }
+            return response.toString();
+        } finally {
+            con.disconnect();
+        }
     }
 }

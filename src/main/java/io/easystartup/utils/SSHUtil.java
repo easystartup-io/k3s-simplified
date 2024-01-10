@@ -13,7 +13,9 @@ import java.util.Map;
  * @author indianBond
  */
 public class SSHUtil {
-    public static void ssh(Server server,int port, )
+    public static String ssh(Server server,int port, String command, boolean isSSHAgent){
+        return "";
+    }
     public static ShellResult sshinternal(String command, String kubeconfigPath, String hetznerToken) {
         try {
             ProcessBuilder builder = new ProcessBuilder();

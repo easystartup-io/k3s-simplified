@@ -48,6 +48,7 @@ public class CreateNewCluster {
         firewall = createFirewall();
         sshKey = createSSH();
 
+        // Todo: try to do in parallel
         createServers(serverMap);
         loadBalancer = createLoadBalancer();
 

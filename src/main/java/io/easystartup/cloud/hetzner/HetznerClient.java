@@ -291,20 +291,21 @@ public class HetznerClient {
 
 
     private static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
-        return TemplateUtil.getTemplateFile(TemplateUtil.CLOUD_INIT_YAML_PATH)
-                .replace("${ssh_port}", Integer.toString(sshPort))
-                .replace("${eth1_str}", eth1(snapshotOs))
-                .replace("${growpart_str}", growpart(snapshotOs))
-                .replace("${packages_str}", generatePackagesStr(snapshotOs, additionalPackages))
-                .replace("${post_create_commands_str}", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
+        Map<String, Object> data = new HashMap<>();
+        data.put("ssh_port", Integer.toString(sshPort));
+        data.put("eth1_str", eth1(snapshotOs));
+        data.put("growpart_str", growpart(snapshotOs));
+        data.put("packages_str", generatePackagesStr(snapshotOs, additionalPackages));
+        data.put("post_create_commands_str", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
+        return TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
     }
 
-    private static String growpart(String snapshotOs) {
+    public static String growpart(String snapshotOs) {
         return "microos".equals(snapshotOs) ?
                 "growpart:\n  devices: [\"/var\"]\n" : "";
     }
 
-    private static String eth1(String snapshotOs) {
+    public static String eth1(String snapshotOs) {
         return "microos".equals(snapshotOs) ?
                 "- content: |\n    BOOTPROTO='dhcp'\n    STARTMODE='auto'\n  path: /etc/sysconfig/network/ifcfg-eth1\n" : "";
     }
@@ -329,7 +330,7 @@ public class HetznerClient {
         return commands;
     }
 
-    private static String generatePostCreateCommandsStr(String snapshotOs, List<String> additionalPostCreateCommands, List<String> finalCommands) {
+    public static String generatePostCreateCommandsStr(String snapshotOs, List<String> additionalPostCreateCommands, List<String> finalCommands) {
         List<String> postCreateCommands = new ArrayList<>(mandatoryPostCreateCommands());
 
         if ("microos".equals(snapshotOs)) {
@@ -344,7 +345,7 @@ public class HetznerClient {
                 .collect(Collectors.joining("\n"));
     }
 
-    private static String generatePackagesStr(String snapshotOs, List<String> additionalPackages) {
+    public static String generatePackagesStr(String snapshotOs, List<String> additionalPackages) {
         List<String> packages = new ArrayList<>();
         packages.add("fail2ban");
         packages.add("microos".equals(snapshotOs) ? "wireguard-tools" : "wireguard");
