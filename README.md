@@ -1,0 +1,1 @@
+java -jar k3s-simplifier-1.0-all.jar create --config cluster_config.yaml

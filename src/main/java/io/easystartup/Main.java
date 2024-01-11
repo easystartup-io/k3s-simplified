@@ -2,10 +2,21 @@ package io.easystartup;
 
 
 import io.easystartup.configuration.ConfigurationLoader;
+import io.easystartup.utils.TemplateUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import picocli.CommandLine;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 
+import static io.easystartup.utils.TemplateUtil.CLOUD_INIT_YAML_PATH;
 import static picocli.CommandLine.Command;
 
 /*
@@ -21,16 +32,21 @@ public class Main {
     @Command(name = "k3s-simplifier",
             mixinStandardHelpOptions = true,
             version = "k3s-simplifier 1.0",
-            description = "A tool to create k3s clusters on any Cloud"
+            synopsisHeading = "Usage:%n   ",
+            description = "A tool to create k3s clusters on any Cloud",
+            synopsisSubcommandLabel = "[Subcommand]",
+            commandListHeading = "%nSubcommands:%n",
+            subcommands = {
+                    CreateCluster.class
+            }
     )
     public static class K3sSimplifier implements Callable<Integer> {
+        @CommandLine.Spec
+        CommandLine.Model.CommandSpec spec;
+
         @Override
         public Integer call() throws Exception {
-            return null;
-        }
-
-        @Command(name = "create", description = "# Create a cluster")
-        public void createCluster() {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Please enter a command like \"create\" or \"delete\" etc...\n");
         }
 
         @Command(name = "delete", description = "# Delete a cluster")
@@ -60,6 +76,9 @@ public class Main {
             configurationLoader.validate();
             for (String error : configurationLoader.getErrors()) {
                 System.out.println(error);
+            }
+            if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                return;
             }
             new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
         }

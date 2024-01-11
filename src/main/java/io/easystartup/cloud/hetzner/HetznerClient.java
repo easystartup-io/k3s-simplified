@@ -252,6 +252,7 @@ public class HetznerClient {
                 .builder()
                 .name(serverName)
                 .image(image)
+                .startAfterCreate(true)
                 .location(location)
                 .serverType(instanceType)
                 .firewalls(List.of(CreateServerRequestFirewall.builder().firewallId(firewall.getId()).build()))
@@ -265,26 +266,24 @@ public class HetznerClient {
                         .enableIPv4(enablePublicNetIpv4)
                         .enableIPv6(enablePublicNetIpv6)
                         .build());
-        CreateServerResponse server = hetznerCloudAPI.createServer(builder.build());
-
-        waitForServerCreation(serverName);
-
-        return server.getServer();
+        hetznerCloudAPI.createServer(builder.build());
+        return waitForServerCreation(serverName);
     }
 
-    private void waitForServerCreation(String serverName) {
+    private Server waitForServerCreation(String serverName) {
+        // Todo: wait for server to start up also
         long tic = System.currentTimeMillis();
         while (true) {
             Server server = findServer(serverName);
             if (CollectionUtils.isNotEmpty(server.getPrivateNet()) &&
                     StringUtils.isNotBlank(server.getPrivateNet().getFirst().getIp())) {
-                break;
+                return server;
             }
             sleep(2000);
             long tac = System.currentTimeMillis();
             // Ideally shouldn't take so long to setup server
             if ((tac - tic) > TimeUnit.MINUTES.toMillis(10)) {
-                break;
+                return server;
             }
         }
     }

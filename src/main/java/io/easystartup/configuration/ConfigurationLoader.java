@@ -46,10 +46,12 @@ public class ConfigurationLoader {
         if (isBlank(this.settings.getHetznerToken())) {
             this.settings.setHetznerToken(System.getenv("HCLOUD_TOKEN"));
         }
+
+        replaceTildeWithUserHomeDirectory(settings);
+
         validateHetznerToken(errors);
         this.hetznerClient = new HetznerClient(settings.getHetznerToken());
     }
-
 
     public void validate() {
         validateCreateSettings(errors);
@@ -343,4 +345,15 @@ public class ConfigurationLoader {
     public MainSettings getSettings() {
         return this.settings;
     }
+
+    private void replaceTildeWithUserHomeDirectory(MainSettings settings) {
+        settings.setKubeconfigPath(replaceFilePath(settings.getKubeconfigPath()));
+        settings.setPrivateSSHKeyPath(replaceFilePath(settings.getPrivateSSHKeyPath()));
+        settings.setPublicSSHKeyPath(replaceFilePath(settings.getPublicSSHKeyPath()));
+    }
+
+    private String replaceFilePath(String path) {
+        return path.startsWith("~") ? path.replaceFirst("~", System.getProperty("user.home")) : path;
+    }
+
 }

@@ -21,7 +21,7 @@ H	java:S106½"+Replace this use of System.out by a logger.(‡ „8×–õâÎ1
 M	java:S106Ğ"+Replace this use of System.out by a logger.(Šˆ—‰ûÿÿÿÿ8×–õâÎ1
 M	java:S106æ"+Replace this use of System.out by a logger.(æ­ª˜üÿÿÿÿ8Ø–õâÎ1
 M	java:S106é"+Replace this use of System.out by a logger.(ŠùèÒıÿÿÿÿ8Ø–õâÎ1
-H	java:S106ë"+Replace this use of System.out by a logger.(İó¼À8Ø–õâÎ1
+M	java:S106ë"+Replace this use of System.out by a logger.(ö÷Ú­ÿÿÿÿÿ8Ø–õâÎ1
 ]
 java:S1117ò":Rename "sshKey" which hides the field declared at line 38.(¶ˆÜüÿÿÿÿ8Ø–õâÎ1
 M	java:S106ô"+Replace this use of System.out by a logger.(£äçùÿÿÿÿ8Ø–õâÎ1

@@ -18,7 +18,7 @@ public class TemplateUtil {
     public static final String CLUSTER_AUTOSCALER_MANIFEST = "templates/cluster_autoscaler.yaml";
 
     public static String getTemplateFile(String file){
-        InputStream resourceAsStream = TemplateUtil.class.getResourceAsStream(file);
+        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         try {
             return IOUtils.toString(resourceAsStream);
         } catch (IOException e) {

@@ -232,7 +232,7 @@ public class CreateNewCluster {
         }
         System.out.println("Creating placement group " + placementGroupName + "...");
         placementGroup = hetznerClient.createPlacementGroup(placementGroupName);
-        System.out.println("done creating " + placementGroup.getName());
+        System.out.println("done creating placement group " + placementGroup.getName());
         return placementGroup;
     }
 
