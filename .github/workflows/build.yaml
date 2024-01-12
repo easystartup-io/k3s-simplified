@@ -1,4 +1,5 @@
 name: Create release
+run-name: Deploy to ${{ github.sha }} by @${{ github.actor }}
 
 on:
   push:
@@ -39,4 +40,4 @@ jobs:
           file: "build/distributions/k3s-simplified.tar.gz"
           tag: ${{ steps.version.outputs.v-version }}
           overwrite: true
-          body: "Creating the zip"
+          body: "Creating the tar for ${{ github.sha }}"
