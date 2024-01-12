@@ -1,0 +1,26 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build_release:
+    name: Publish zip
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'oracle'
+      - run: ./gradlew clean createTar --no-daemon
+      - name: Publish new version
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.PAT }}
+          file: "build/distributions/k3s-simplifier.tar.gz"
+          tag: ${{ github.ref_name }}
+          overwrite: true
+          body: "Creating the zip"

@@ -18,6 +18,7 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+bundled-jre/*
 
 ### Eclipse ###
 .apt_generated
@@ -43,3 +44,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Kuberentes testing ###
+kubeconfig

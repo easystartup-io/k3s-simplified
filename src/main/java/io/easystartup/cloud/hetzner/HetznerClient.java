@@ -276,7 +276,7 @@ public class HetznerClient {
         while (true) {
             Server server = findServer(serverName);
             if (CollectionUtils.isNotEmpty(server.getPrivateNet()) &&
-                    StringUtils.isNotBlank(server.getPrivateNet().getFirst().getIp())) {
+                    StringUtils.isNotBlank(server.getPrivateNet().get(0).getIp())) {
                 return server;
             }
             sleep(2000);

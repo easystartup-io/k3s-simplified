@@ -34,6 +34,8 @@ public class ConfigurationLoader {
 
     // Constructor
     public ConfigurationLoader(String configurationFilePath) {
+        configurationFilePath = replaceFilePathIfStartsWithTilda(configurationFilePath);
+
         String content;
         try {
             content = new String(Files.readAllBytes(Paths.get(configurationFilePath)));
@@ -347,12 +349,12 @@ public class ConfigurationLoader {
     }
 
     private void replaceTildeWithUserHomeDirectory(MainSettings settings) {
-        settings.setKubeconfigPath(replaceFilePath(settings.getKubeconfigPath()));
-        settings.setPrivateSSHKeyPath(replaceFilePath(settings.getPrivateSSHKeyPath()));
-        settings.setPublicSSHKeyPath(replaceFilePath(settings.getPublicSSHKeyPath()));
+        settings.setKubeconfigPath(replaceFilePathIfStartsWithTilda(settings.getKubeconfigPath()));
+        settings.setPrivateSSHKeyPath(replaceFilePathIfStartsWithTilda(settings.getPrivateSSHKeyPath()));
+        settings.setPublicSSHKeyPath(replaceFilePathIfStartsWithTilda(settings.getPublicSSHKeyPath()));
     }
 
-    private String replaceFilePath(String path) {
+    private String replaceFilePathIfStartsWithTilda(String path) {
         return path.startsWith("~") ? path.replaceFirst("~", System.getProperty("user.home")) : path;
     }
 

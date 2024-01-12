@@ -89,6 +89,6 @@ public class SSH {
         if (server.getPublicNet() != null && server.getPublicNet().getIpv4() != null && isNotBlank(server.getPublicNet().getIpv4().getIp())) {
             return server.getPublicNet().getIpv4().getIp();
         }
-        return server.getPrivateNet().getFirst().getIp();
+        return server.getPrivateNet().get(0).getIp();
     }
 }

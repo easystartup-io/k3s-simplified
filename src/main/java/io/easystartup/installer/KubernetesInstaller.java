@@ -71,7 +71,7 @@ public class KubernetesInstaller {
         System.out.println("\n=== Setting up Kubernetes ===\n");
 
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
-        setUpFirstMaster(serverList.getFirst());
+        setUpFirstMaster(serverList.get(0));
         setUpOtherMasters(serverList);
 
         String k3sToken = getK3sToken();
@@ -129,7 +129,7 @@ public class KubernetesInstaller {
         }
 
         // Set file permissions (optional, based on your security requirements)
-        setFilePermissions(kubeconfigPath, "600");
+        setFilePermissions(kubeconfigPath, "rw-------");
 
         System.out.println("Kubeconfig saved to " + kubeconfigPath);
     }
@@ -217,7 +217,8 @@ public class KubernetesInstaller {
 
         if (!result.isSuccess()) {
             System.out.println("Failed to create Hetzner Cloud secret:");
-            System.out.println(result);
+            System.out.println(result.getOutput());
+            System.out.println(result.getStatus());
             throw new RuntimeException("Failed to create Hetzner Cloud secret");
         }
 
@@ -282,7 +283,7 @@ public class KubernetesInstaller {
     private void deployClusterAutoscaler(String k3sToken) {
         System.out.println("\nDeploying Cluster Autoscaler...");
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
-        Server firstMaster = serverList.getFirst();
+        Server firstMaster = serverList.get(0);
 
         NodePool[] workerNodePools = mainSettings.getWorkerNodePools();
         if (workerNodePools == null || workerNodePools.length == 0) {
@@ -468,11 +469,11 @@ public class KubernetesInstaller {
         }
         List<Server> masters = servers.get(CreateNewCluster.ServerType.MASTER);
         if (masters.size() > 1 && loadBalancer != null) {
-            sans.add("--tls-san=" + loadBalancer.getPrivateNet().getFirst().getIp());
+            sans.add("--tls-san=" + loadBalancer.getPrivateNet().get(0).getIp());
         }
 
         for (Server master : masters) {
-            String masterPrivateIp = master.getPrivateNet().getFirst().getIp();
+            String masterPrivateIp = master.getPrivateNet().get(0).getIp();
             sans.add("--tls-san=" + masterPrivateIp);
         }
 
@@ -504,7 +505,7 @@ public class KubernetesInstaller {
 
     private String getK3sToken() {
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
-        Server firstMaster = serverList.getFirst();
+        Server firstMaster = serverList.get(0);
         String command = "cat /var/lib/rancher/k3s/server/node-token";
         String token = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
@@ -520,13 +521,13 @@ public class KubernetesInstaller {
         if (masterServer.size() > 1 && loadBalancer != null) {
             if (mainSettings.isPrivateApiLoadBalancer()
                     && isNotEmpty(loadBalancer.getPrivateNet())
-                    && isNotBlank(loadBalancer.getPrivateNet().getFirst().getIp())) {
-                return loadBalancer.getPrivateNet().getFirst().getIp();
+                    && isNotBlank(loadBalancer.getPrivateNet().get(0).getIp())) {
+                return loadBalancer.getPrivateNet().get(0).getIp();
             } else if (Boolean.TRUE.equals(loadBalancer.getPublicEnabled()) && StringUtils.isNotBlank(loadBalancer.getPublicIpv4())) {
                 return loadBalancer.getPublicIpv4();
             }
         }
-        return getHostIp(masterServer.getFirst());
+        return getHostIp(masterServer.get(0));
     }
 
     private String getHostIp(Server server) {
@@ -536,7 +537,7 @@ public class KubernetesInstaller {
         }
         List<PrivateNet> privateNet = server.getPrivateNet();
         if (isNotEmpty(privateNet)) {
-            return privateNet.getFirst().getIp();
+            return privateNet.get(0).getIp();
         }
         return null;
     }
@@ -544,8 +545,8 @@ public class KubernetesInstaller {
     private String workerInstallScript(String k3sToken) {
 
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
-        Server firstMaster = serverList.getFirst();
-        String firstMasterPrivateIp = firstMaster.getPrivateNet().getFirst().getIp();
+        Server firstMaster = serverList.get(0);
+        String firstMasterPrivateIp = firstMaster.getPrivateNet().get(0).getIp();
 
         Map<String, Object> data = new HashMap<>();
         data.put("cluster_name", mainSettings.getClusterName());
@@ -565,14 +566,15 @@ public class KubernetesInstaller {
         return " --flannel-backend=wireguard-native ";
     }
 
+    /**
+     * Extracts the first three octets from a subnet string and appends ".1" to it.
+     *
+     * @param privateNetworkSubnet The subnet string, e.g., "10.0.0.0/16".
+     * @return The modified IP address string.
+     */
     public static String getPrivateNetworkTestIp(String privateNetworkSubnet) {
-        // Split the subnet string at periods
-        String[] parts = privateNetworkSubnet.split("\\.")[0].split("/")[0].split("\\.");
-
-        // Take the first three parts and join them with periods
+        String[] parts = privateNetworkSubnet.split("/")[0].split("\\.");
         String joinedParts = String.join(".", parts[0], parts[1], parts[2]);
-
-        // Append ".1" to the end
         return joinedParts + ".1";
     }
 

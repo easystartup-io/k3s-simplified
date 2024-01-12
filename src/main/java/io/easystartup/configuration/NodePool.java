@@ -8,6 +8,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodePool {
+
+    public NodePool() {
+    }
+
     @JsonProperty("name")
     private String name;
 

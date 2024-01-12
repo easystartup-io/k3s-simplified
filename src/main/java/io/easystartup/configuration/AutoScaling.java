@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AutoScaling {
 
+    public AutoScaling() {
+    }
+
     private boolean enabled;
     @JsonProperty(value = "min_instances")
     private Integer minInstances;

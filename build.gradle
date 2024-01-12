@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'org.jreleaser' version '1.10.0'
 }
 
 group = 'io.easystartup'
@@ -12,6 +13,7 @@ targetCompatibility = 21
 repositories {
     mavenCentral()
     google()
+    gradlePluginPortal()
 }
 
 dependencies {
@@ -30,11 +32,9 @@ dependencies {
     implementation group: 'net.i2p.crypto', name: 'eddsa', version: '0.3.0'
     implementation group: 'org.apache.sshd', name: 'sshd-core', version: '2.11.0'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.11'
+
     implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.11'
 
-
-
-//    implementation "me.tomsdevsn:hetznercloud-api:3.1.0"
 
     // Command line arg processor
     implementation 'info.picocli:picocli:4.7.5'
@@ -47,8 +47,9 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
 jar {
-    archiveBaseName = 'k3s-simplifier'
+    archiveFileName = 'k3s-simplifier.jar'
     duplicatesStrategy = "exclude"
     archiveClassifier = "all"
     manifest {
@@ -60,3 +61,51 @@ jar {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
+
+// Task to create a tar.gz archive
+task createTar(type: Tar) {
+    // Define dependencies for the task
+    dependsOn jar // This specifies that the jar task must run before createTar
+
+    // Configure the tar task
+    compression Compression.GZIP
+    archiveFileName = 'k3s-simplifier.tar.gz'
+    destinationDirectory = file("${buildDir}/distributions")
+
+    // Specify the contents of the tar archive
+    from(jar.archiveFile) { // Include the jar file
+        into 'k3s-simplifier/'
+    }
+    from("scripts/") { // Include runtime classpath
+        into 'k3s-simplifier/'
+    }
+}
+
+application {
+    mainClass = 'io.easystartup.Main'
+}
+
+
+//graalvmNative {
+//    binaries.all {
+//        resources.autodetect()
+//    }
+//    binaries {
+//        main {
+//            javaLauncher = javaToolchains.launcherFor {
+//                languageVersion = JavaLanguageVersion.of(21)
+//                vendor = JvmVendorSpec.matching("GraalVM")
+//            }
+//            useFatJar = true
+//            buildArgs(
+//                    "--initialize-at-build-time=org.slf4j.impl.StaticLoggerBinder,org.slf4j.LoggerFactory,org.slf4j.helpers.Reporter,org.slf4j.simple.SimpleLogger",
+//                    "-H:ReflectionConfigurationFiles=../../../reflect-config.json",
+//                    "-H:+UnlockExperimentalVMOptions",
+//                    "--enable-url-protocols=https"
+////                    "--features=io.easystartup.Main.RuntimeReflectionRegistrationFeature"
+//
+//            )
+//        }
+//    }
+//    toolchainDetection = false
+//}

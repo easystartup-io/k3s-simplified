@@ -2,21 +2,12 @@ package io.easystartup;
 
 
 import io.easystartup.configuration.ConfigurationLoader;
-import io.easystartup.utils.TemplateUtil;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.IOUtils;
+import org.slf4j.simple.SimpleLogger;
 import picocli.CommandLine;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.concurrent.Callable;
 
-import static io.easystartup.utils.TemplateUtil.CLOUD_INIT_YAML_PATH;
 import static picocli.CommandLine.Command;
 
 /*
@@ -25,6 +16,7 @@ import static picocli.CommandLine.Command;
 public class Main {
 
     public static void main(String[] args) {
+        setLoggerProperties();
         int execute = new CommandLine(new K3sSimplifier()).execute(args);
         System.exit(execute);
     }
@@ -47,6 +39,7 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             throw new CommandLine.ParameterException(spec.commandLine(), "Please enter a command like \"create\" or \"delete\" etc...\n");
+//            return null;
         }
 
         @Command(name = "delete", description = "# Delete a cluster")
@@ -82,6 +75,11 @@ public class Main {
             }
             new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
         }
+    }
+
+    private static void setLoggerProperties() {
+        System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "WARN");
+        System.setProperty(SimpleLogger.SHOW_DATE_TIME_KEY, "true");
     }
 
 }

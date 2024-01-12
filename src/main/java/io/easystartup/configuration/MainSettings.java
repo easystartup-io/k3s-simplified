@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MainSettings {
+    public MainSettings() {
+    }
+
     @JsonProperty("hetzner_token")
     private String hetznerToken;
 

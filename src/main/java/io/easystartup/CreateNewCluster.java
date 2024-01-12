@@ -4,6 +4,7 @@ import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.installer.KubernetesInstaller;
+import io.easystartup.utils.SSH;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import static io.easystartup.utils.Util.sleep;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -37,9 +39,13 @@ public class CreateNewCluster {
     private Firewall firewall;
     private SSHKey sshKey;
 
+    private final SSH ssh;
+
     public CreateNewCluster(MainSettings mainSettings) {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
+        this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
+        ;
     }
 
     public void initializeCluster() {
@@ -52,6 +58,8 @@ public class CreateNewCluster {
         createServers(serverMap);
         loadBalancer = createLoadBalancer();
 
+        waitForAllServersToComeUp(serverMap);
+
         KubernetesInstaller kubernetesInstaller = new KubernetesInstaller(mainSettings, hetznerClient, loadBalancer, serverMap, network, firewall, sshKey);
         kubernetesInstaller.startInstallation();
     }
@@ -63,6 +71,10 @@ public class CreateNewCluster {
         String loadBalancerName = mainSettings.getClusterName() + "-api";
         LoadBalancer loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
         if (loadBalancer != null) {
+            System.out.println("Load balancer has private IP : " + loadBalancer.getPrivateNet().getFirst().getIp());
+            if (!mainSettings.isPrivateApiLoadBalancer()) {
+                System.out.println("Load balancer has public IP : " + loadBalancer.getPublicIpv4());
+            }
             System.out.println("Load balancer for API server already exists, skipping.");
             return loadBalancer;
         }
@@ -80,6 +92,12 @@ public class CreateNewCluster {
                 }
                 sleep(2000);
             }
+        }
+        if (mainSettings.isPrivateApiLoadBalancer()) {
+            System.out.println("Load balancer has private IP " + loadBalancer.getPrivateNet().getFirst().getIp());
+        } else {
+            System.out.println("Load balancer has private IP : " + loadBalancer.getPrivateNet().getFirst().getIp());
+            System.out.println("Load balancer has public IP : " + loadBalancer.getPublicIpv4());
         }
         System.out.println("Done");
         return loadBalancer;
@@ -290,6 +308,42 @@ public class CreateNewCluster {
         System.out.println("Creating network");
         Location hetznerLocation = hetznerClient.getLocation(location);
         return hetznerClient.createNetwork(networkName, privateNetworkSubnet, hetznerLocation.getNetworkZone());
+    }
+
+    private void waitForAllServersToComeUp(Map<ServerType, List<Server>> serverMap) {
+        for (Map.Entry<ServerType, List<Server>> serverTypeListEntry : serverMap.entrySet()) {
+            List<Server> value = serverTypeListEntry.getValue();
+            for (Server server : value) {
+                waitForServerToComeUp(server);
+            }
+        }
+    }
+
+    private void waitForServerToComeUp(Server server) {
+        System.out.println("Waiting for successful SSH connectivity with server " + server.getName() + "...");
+
+        long tic = System.currentTimeMillis();
+        while (true) {
+            try {
+                TimeUnit.SECONDS.sleep(1); // Waiting 1 second before retry
+
+                // Implement a timeout mechanism here if necessary
+                String result = ssh.ssh(server, mainSettings.getSshPort(), "echo ready", mainSettings.isUseSSHAgent());
+
+                if ("ready".equals(result.trim())) {
+                    break; // Break the loop if the expected result is achieved
+                }
+            } catch (Throwable throwable) {
+                long tac = System.currentTimeMillis();
+                if ((tac - tic) > TimeUnit.MINUTES.toMillis(2)) {
+                    System.out.println("facing issue while connecting to " + server.getName());
+                    throwable.printStackTrace();
+                    throw new RuntimeException(throwable);
+                }
+            }
+        }
+
+        System.out.println("...server " + server.getName() + " is now up.");
     }
 
 }
