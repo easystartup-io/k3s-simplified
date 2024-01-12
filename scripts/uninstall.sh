@@ -12,14 +12,14 @@ if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     rm -rf "${JAVA_DIRECTORY}/k3s-simplified-java"
 fi
 ## remove jar
-rm "${JAR_DIRECTORY}/k3s-simplifier.jar"
+rm "${JAR_DIRECTORY}/k3s-simplified.jar"
 ## remove run script
-rm "${SCRIPT_DIRECTORY}/k3s-simplifier"
+rm "${SCRIPT_DIRECTORY}/k3s-simplified"
 
 rm install.sh
 rm uninstall.sh
-rm k3s-simplifier.jar
-rm k3s-simplifier.sh
+rm k3s-simplified.jar
+rm k3s-simplified.sh
 
 # Delete current directory if empty
 current_dir=$(pwd)

@@ -49,7 +49,7 @@ test {
 }
 
 jar {
-    archiveFileName = 'k3s-simplifier.jar'
+    archiveFileName = 'k3s-simplified.jar'
     duplicatesStrategy = "exclude"
     archiveClassifier = "all"
     manifest {
@@ -68,15 +68,15 @@ task createTar(type: Tar) {
 
     // Configure the tar task
     compression Compression.GZIP
-    archiveFileName = 'k3s-simplifier.tar.gz'
+    archiveFileName = 'k3s-simplified.tar.gz'
     destinationDirectory = file("${buildDir}/distributions")
 
     // Specify the contents of the tar archive
     from(jar.archiveFile) { // Include the jar file
-        into 'k3s-simplifier/'
+        into 'k3s-simplified/'
     }
     from("scripts/") { // Include runtime classpath
-        into 'k3s-simplifier/'
+        into 'k3s-simplified/'
     }
 }
 

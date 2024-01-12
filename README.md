@@ -80,9 +80,9 @@ perform k3s upgrades.
 ##### Apple Silicon/MacOS/LINUX M1/amd64/aarch64
 
 ```bash
-wget https://github.com/easyStartup-pulse/k3s-simplified/releases/latest/download/k3s-simplifier.tar.gz
-tar -xf k3s-simplifier.tar.gz
-cd k3s-simplifier
+wget https://github.com/easyStartup-pulse/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
+tar -xf k3s-simplified.tar.gz
+cd k3s-simplified
 chmod +x install.sh
 sudo ./install.sh
 ```

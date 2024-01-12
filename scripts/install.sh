@@ -67,10 +67,10 @@ if [ ! -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     mv "${JAVA_DIR_LOCAL_BASE}" "${JAVA_DIRECTORY}/k3s-simplified-java"
 fi
 ## move jar
-mv k3s-simplifier.jar "${JAR_DIRECTORY}/k3s-simplifier.jar"
+mv k3s-simplified.jar "${JAR_DIRECTORY}/k3s-simplified.jar"
 ## move run script
-mv k3s-simplifier.sh "${SCRIPT_DIRECTORY}/k3s-simplifier"
-chmod +x "${SCRIPT_DIRECTORY}/k3s-simplifier"
+mv k3s-simplified.sh "${SCRIPT_DIRECTORY}/k3s-simplified"
+chmod +x "${SCRIPT_DIRECTORY}/k3s-simplified"
 
 rm install.sh
 rm uninstall.sh
