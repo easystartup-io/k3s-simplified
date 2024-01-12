@@ -81,15 +81,19 @@ public class Main {
 
         @Override
         public void run() {
-            ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
-            configurationLoader.validate();
-            for (String error : configurationLoader.getErrors()) {
-                System.out.println(error);
+            try {
+                ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
+                configurationLoader.validate();
+                for (String error : configurationLoader.getErrors()) {
+                    System.out.println(error);
+                }
+                if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                    return;
+                }
+                new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
             }
-            if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
-                return;
-            }
-            new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
         }
     }
 

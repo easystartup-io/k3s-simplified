@@ -124,6 +124,9 @@ public class MainSettings {
 
     @JsonProperty("ssh_port")
     private int sshPort = 22;
+
+    @JsonProperty("ssh_port")
+    private boolean debug;
     public String getHetznerToken() {
         return hetznerToken;
     }
@@ -486,5 +489,13 @@ public class MainSettings {
 
     public void setAutoScalingImage(String autoScalingImage) {
         this.autoScalingImage = autoScalingImage;
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 }

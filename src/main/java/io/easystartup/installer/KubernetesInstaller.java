@@ -51,8 +51,11 @@ public class KubernetesInstaller {
     private final Firewall firewall;
     private final SSHKey sshKey;
 
+    private final boolean debug;
+
     public KubernetesInstaller(MainSettings mainSettings, HetznerClient hetznerClient, LoadBalancer loadBalancer, Map<CreateNewCluster.ServerType, List<Server>> servers, Network network, Firewall firewall, SSHKey sshKey) {
         this.mainSettings = mainSettings;
+        this.debug = mainSettings.isDebug();
         this.hetznerClient = hetznerClient;
         this.loadBalancer = loadBalancer;
         this.servers = servers;
@@ -116,8 +119,11 @@ public class KubernetesInstaller {
     private void setUpFirstMaster(Server firstMaster) {
         System.out.println("Deploying k3s to first master " + firstMaster.getName() + "...");
 
-        String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), masterInstallScript(firstMaster, true), mainSettings.isUseSSHAgent());
+        String command = masterInstallScript(firstMaster, true);
+        printDebug(command);
+        String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
+        printDebug(output);
         System.out.println("Waiting for the control plane to be ready...");
 
         sleep(10_000); // Sleep for 10 seconds
@@ -215,7 +221,10 @@ public class KubernetesInstaller {
 
     private void deployK3sToOtherMasters(Server master) {
         System.out.println("Deploying k3s to master " + master.getName() + "...");
-        ssh.ssh(master, mainSettings.getSshPort(), masterInstallScript(master, false), mainSettings.isUseSSHAgent());
+        String command = masterInstallScript(master, false);
+        printDebug(master.getName() + "\n" + command);
+        String ssh1 = ssh.ssh(master, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        printDebug(master.getName() + "\n" + ssh1);
         System.out.println("...k3s has been deployed to master " + master.getName() + ".");
     }
 
@@ -633,5 +642,13 @@ public class KubernetesInstaller {
         } finally {
             con.disconnect();
         }
+    }
+
+
+    private void printDebug(String command) {
+        if (debug) {
+            return;
+        }
+        System.out.println(command);
     }
 }
