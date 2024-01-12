@@ -26,10 +26,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -97,6 +94,7 @@ public class KubernetesInstaller {
 
     private void waitForControlPlaneFirstNodeToBeReady(Server server) {
         System.out.println("Validating that kubectl is working and able to query for nodes");
+        long tic = System.currentTimeMillis();
         while (true) {
             String command = "kubectl get nodes";
             ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
@@ -104,6 +102,14 @@ public class KubernetesInstaller {
                 break;
             }
             Util.sleep(2_000L);
+            long tac = System.currentTimeMillis();
+            if ((tac - tic) > TimeUnit.MINUTES.toMillis(4)) {
+                System.out.println("Its taking too long to connect, please check that your control plane is  accessible from here and please try again");
+                if (StringUtils.isNotBlank(mainSettings.getAPIServerHostname())) {
+                    System.out.println("Also ensure that your DNS is pointed properly for " + mainSettings.getAPIServerHostname());
+                }
+                System.exit(1);
+            }
         }
     }
 
