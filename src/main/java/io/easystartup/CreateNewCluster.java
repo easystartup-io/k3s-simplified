@@ -335,7 +335,7 @@ public class CreateNewCluster {
                 }
             } catch (Throwable throwable) {
                 long tac = System.currentTimeMillis();
-                if ((tac - tic) > TimeUnit.MINUTES.toMillis(2)) {
+                if ((tac - tic) > TimeUnit.MINUTES.toMillis(4)) {
                     System.out.println("facing issue while connecting to " + server.getName());
                     throwable.printStackTrace();
                     throw new RuntimeException(throwable);

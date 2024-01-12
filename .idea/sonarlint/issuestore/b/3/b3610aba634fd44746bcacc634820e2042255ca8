@@ -35,3 +35,5 @@ java:S4144σ"bUpdate this method so that its implementation is not identical to
 java:S4144χ"nUpdate this method so that its implementation is not identical to "getScheduleWorkloadsOnMasters" on line 239.(Νς›8Δ½ΏΞ1
 ‹
 java:S4144ϋ"hUpdate this method so that its implementation is not identical to "getCSIDriverManifestURL" on line 255.(³£ƒωÿÿÿÿ8Δ½ΏΞ1
+†
+java:S4144ƒ"cUpdate this method so that its implementation is not identical to "getWorkerNodePools" on line 279.(ªύΉνϊÿÿÿÿ8‚δρτΟ1

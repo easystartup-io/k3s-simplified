@@ -70,8 +70,12 @@ public class KubernetesInstaller {
     public void startInstallation() {
         System.out.println("\n=== Setting up Kubernetes ===\n");
 
+        Util.checkKubectl();
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
         setUpFirstMaster(serverList.get(0));
+
+        waitForControlPlaneFirstNodeToBeReady(serverList.get(0));
+
         setUpOtherMasters(serverList);
 
         String k3sToken = getK3sToken();
@@ -80,7 +84,6 @@ public class KubernetesInstaller {
 
         System.out.println("\n=== Deploying Hetzner drivers ===\n");
 
-        Util.checkKubectl();
 
         addLabelsAndTaintsToMasters();
         addLabelsAndTaintsToWorkers();
@@ -90,6 +93,18 @@ public class KubernetesInstaller {
         deployCsiDriver();
         deploySystemUpgradeController();
         deployClusterAutoscaler(k3sToken);
+    }
+
+    private void waitForControlPlaneFirstNodeToBeReady(Server server) {
+        System.out.println("Validating that kubectl is working and able to query for nodes");
+        while (true) {
+            String command = "kubectl get nodes";
+            ShellUtil.ShellResult result = ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
+            if (result.isSuccess() && result.getOutput().contains(server.getName())) {
+                break;
+            }
+            Util.sleep(2_000L);
+        }
     }
 
     private void setUpFirstMaster(Server firstMaster) {
