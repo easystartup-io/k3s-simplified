@@ -64,7 +64,6 @@ jar {
 
 // Task to create a tar.gz archive
 task createTar(type: Tar) {
-    // Define dependencies for the task
     dependsOn jar // This specifies that the jar task must run before createTar
 
     // Configure the tar task
