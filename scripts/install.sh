@@ -85,5 +85,5 @@ num_items=$(ls -1A "$current_dir" | wc -l)
 if [ $num_items -eq 0 ]; then
     # If empty, go up a directory and delete the empty directory
     cd ..
-    rmdir "$current_dir"
+#    rmdir "$current_dir"
 fi
