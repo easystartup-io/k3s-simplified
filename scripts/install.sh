@@ -36,7 +36,7 @@ else
 fi
 
 # Check if Java is already installed
-if [ -d "$JAVA_DIR_LOCAL_BASE" ]; then
+if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     echo "Java is already installed."
 else
     # Check if the OS is Linux and architecture is aarch64
@@ -63,7 +63,9 @@ mkdir -p $SCRIPT_DIRECTORY
 
 # move items
 ## move java
-mv "${JAVA_DIR_LOCAL_BASE}" "${JAVA_DIRECTORY}/k3s-simplified-java"
+if [ ! -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
+    mv "${JAVA_DIR_LOCAL_BASE}" "${JAVA_DIRECTORY}/k3s-simplified-java"
+fi
 ## move jar
 mv k3s-simplifier.jar "${JAR_DIRECTORY}/k3s-simplifier.jar"
 ## move run script
