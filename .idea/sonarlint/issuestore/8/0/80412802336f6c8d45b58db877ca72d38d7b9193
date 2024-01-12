@@ -1,8 +1,8 @@
 
 q
-java:S1192/"TDefine a constant instead of duplicating this literal "Not yet implemented" 3 times.(¼ÿŒû8àÕåÌÏ1
-X	java:S125*"<This block of commented-out lines of code should be removed.(„§ñ£8¸”«ÎÏ1
-G	java:S106/"+Replace this use of System.out by a logger.(¼ÿŒû8óÕåÌÏ1
-G	java:S1064"+Replace this use of System.out by a logger.(¼ÿŒû8óÕåÌÏ1
-G	java:S1069"+Replace this use of System.out by a logger.(¼ÿŒû8óÕåÌÏ1
-L	java:S106G"+Replace this use of System.out by a logger.(ÆÎ±Üûÿÿÿÿ8õÕåÌÏ1
+java:S11922"TDefine a constant instead of duplicating this literal "Not yet implemented" 3 times.(¼ÿŒû8óéŞóÏ1
+X	java:S125-"<This block of commented-out lines of code should be removed.(„§ñ£8„êŞóÏ1
+G	java:S1062"+Replace this use of System.out by a logger.(¼ÿŒû8„êŞóÏ1
+G	java:S1067"+Replace this use of System.out by a logger.(¼ÿŒû8„êŞóÏ1
+G	java:S106<"+Replace this use of System.out by a logger.(¼ÿŒû8…êŞóÏ1
+L	java:S106W"+Replace this use of System.out by a logger.(ÆÎ±Üûÿÿÿÿ8‰êŞóÏ1

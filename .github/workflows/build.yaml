@@ -2,8 +2,8 @@ name: Create release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
   build_release:
@@ -11,6 +11,19 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
+      - name: Get next version
+        uses: reecetech/version-increment@2023.9.3
+        id: version
+        with:
+          scheme: semver
+          increment: patch
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "version.*"
+          replace: "version=${{ steps.version.outputs.version }}"
+          regex: true
+          include: "src/main/resources/version.properties"
       - uses: actions/setup-java@v3
         with:
           java-version: '21'
@@ -21,6 +34,6 @@ jobs:
         with:
           repo_token: ${{ secrets.PAT }}
           file: "build/distributions/k3s-simplifier.tar.gz"
-          tag: ${{ github.ref_name }}
+          tag: ${{ steps.version.outputs.version }}
           overwrite: true
           body: "Creating the zip"

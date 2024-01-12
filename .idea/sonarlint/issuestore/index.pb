@@ -69,3 +69,5 @@ I
 scripts/k3s-simplifier.sh,d/1/d1b90e9295e8056110db427225a002b269433a03
 D
 scripts/uninstall.sh,8/6/86dd667adcf89e9217bbe0abc8ce9a4827b4e7ae
+a
+1src/main/java/io/easystartup/VersionProvider.java,c/9/c9362577b974d1837de9cc26dafcd71b5e1da6db

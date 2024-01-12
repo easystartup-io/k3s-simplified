@@ -6,6 +6,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.simple.SimpleLogger;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import static picocli.CommandLine.Command;
@@ -23,7 +26,7 @@ public class Main {
 
     @Command(name = "k3s-simplifier",
             mixinStandardHelpOptions = true,
-            version = "k3s-simplifier 1.0",
+            versionProvider = K3sSimplifier.PropertiesVersionProvider.class,
             synopsisHeading = "Usage:%n   ",
             description = "A tool to create k3s clusters on any Cloud",
             synopsisSubcommandLabel = "[Subcommand]",
@@ -55,6 +58,19 @@ public class Main {
         @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")
         public void upgradeCluster() {
             System.out.println("Not yet implemented");
+        }
+
+        static class PropertiesVersionProvider implements CommandLine.IVersionProvider {
+            public String[] getVersion() throws Exception {
+                ClassLoader loader = getClass().getClassLoader();
+                Properties properties = new Properties();
+                try (InputStream resourceStream = loader.getResourceAsStream("version.properties")) {
+                    properties.load(resourceStream);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return new String[]{"k3s-simplifier " + properties.getProperty("version")};
+            }
         }
     }
 
