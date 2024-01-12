@@ -343,7 +343,7 @@ public class HetznerClient {
         postCreateCommands.addAll(additionalPostCreateCommands);
         postCreateCommands.addAll(finalCommands);
 
-        return "- " + String.join("\n- ", postCreateCommands);
+        return "- " + String.join("\n  - ", postCreateCommands);
     }
 
     public static String generatePackagesStr(String snapshotOs, List<String> additionalPackages) {
