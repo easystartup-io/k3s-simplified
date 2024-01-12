@@ -24,7 +24,7 @@ jobs:
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           find: "version.*"
-          replace: "version=${{ steps.version.outputs.current-v-version }}"
+          replace: "version=${{ steps.version.outputs.v-version }}"
           regex: true
           include: "src/main/resources/version.properties"
       - uses: actions/setup-java@v3
@@ -37,6 +37,6 @@ jobs:
         with:
           repo_token: ${{ secrets.PAT }}
           file: "build/distributions/k3s-simplifier.tar.gz"
-          tag: ${{ steps.version.outputs.current-v-version }}
+          tag: ${{ steps.version.outputs.v-version }}
           overwrite: true
           body: "Creating the zip"
