@@ -125,7 +125,7 @@ public class MainSettings {
     @JsonProperty("ssh_port")
     private int sshPort = 22;
 
-    @JsonProperty("ssh_port")
+    @JsonProperty("debug")
     private boolean debug;
     public String getHetznerToken() {
         return hetznerToken;
