@@ -6,10 +6,7 @@ import io.easystartup.configuration.AutoScaling;
 import io.easystartup.configuration.KeyValuePair;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
-import io.easystartup.utils.SSH;
-import io.easystartup.utils.ShellUtil;
-import io.easystartup.utils.TemplateUtil;
-import io.easystartup.utils.Util;
+import io.easystartup.utils.*;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -68,7 +65,7 @@ public class KubernetesInstaller {
 
 
     public void startInstallation() {
-        System.out.println("\n=== Setting up Kubernetes ===\n");
+        System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Setting up Kubernetes ===\n" + ConsoleColors.RESET);
 
         Util.checkKubectl();
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);

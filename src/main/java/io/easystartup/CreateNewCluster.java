@@ -4,6 +4,7 @@ import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.installer.KubernetesInstaller;
+import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
@@ -49,7 +50,7 @@ public class CreateNewCluster {
     }
 
     public void initializeCluster() {
-        System.out.println("\n=== Creating infrastructure resources ===\n");
+        System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Creating infrastructure resources ===\n" + ConsoleColors.RESET);
         network = findOrCreateNetwork();
         firewall = createFirewall();
         sshKey = createSSH();
@@ -71,11 +72,11 @@ public class CreateNewCluster {
         String loadBalancerName = mainSettings.getClusterName() + "-api";
         LoadBalancer loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
         if (loadBalancer != null) {
-            System.out.println("Load balancer has private IP : " + loadBalancer.getPrivateNet().getFirst().getIp());
+            System.out.println("Load balancer has private IP : " + ConsoleColors.BLUE + loadBalancer.getPrivateNet().getFirst().getIp() + ConsoleColors.RESET);
             if (!mainSettings.isPrivateApiLoadBalancer()) {
                 System.out.println("Load balancer has public IP : " + loadBalancer.getPublicIpv4());
             }
-            System.out.println("Load balancer for API server already exists, skipping.");
+            System.out.println(ConsoleColors.GREEN + "Load balancer for API server already exists, skipping." + ConsoleColors.RESET);
             return loadBalancer;
         }
         System.out.println("Creating load balancer for API server...");
@@ -99,7 +100,7 @@ public class CreateNewCluster {
             System.out.println("Load balancer has private IP : " + loadBalancer.getPrivateNet().getFirst().getIp());
             System.out.println("Load balancer has public IP : " + loadBalancer.getPublicIpv4());
         }
-        System.out.println("Done");
+        System.out.println(ConsoleColors.GREEN + "Done" + ConsoleColors.RESET);
         return loadBalancer;
     }
 
@@ -141,7 +142,7 @@ public class CreateNewCluster {
         String location = nodePool.getLocation();
         Server server = hetznerClient.findServer(nodeName);
         if (server != null) {
-            System.out.println("Server " + nodeName + " already exists, skipping.");
+            System.out.println(ConsoleColors.GREEN + "Server " + nodeName + " already exists, skipping." + ConsoleColors.RESET);
             return server;
         }
         System.out.println("Creating server " + nodeName + "...");
@@ -201,7 +202,7 @@ public class CreateNewCluster {
         String location = mainSettings.getMastersPool().getLocation();
         Server server = hetznerClient.findServer(masterName);
         if (server != null) {
-            System.out.println("Server " + masterName + " already exists, skipping.");
+            System.out.println(ConsoleColors.GREEN + "Server " + masterName + " already exists, skipping." + ConsoleColors.RESET);
             return server;
         }
         System.out.println("Creating server " + masterName + "...");
