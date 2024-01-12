@@ -123,7 +123,7 @@ public class KubernetesInstaller {
         printDebug(command);
         String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
-        printDebug(output);
+        System.out.println(output);
         System.out.println("Waiting for the control plane to be ready...");
 
         sleep(10_000); // Sleep for 10 seconds
@@ -224,7 +224,7 @@ public class KubernetesInstaller {
         String command = masterInstallScript(master, false);
         printDebug(master.getName() + "\n" + command);
         String ssh1 = ssh.ssh(master, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
-        printDebug(master.getName() + "\n" + ssh1);
+        System.out.println(master.getName() + "\n" + ssh1);
         System.out.println("...k3s has been deployed to master " + master.getName() + ".");
     }
 
@@ -342,8 +342,8 @@ public class KubernetesInstaller {
                 mainSettings.getSnapshotOs(),
                 getAdditionalPackages(),
                 getAdditionalPostCreateCommands(),
-                List.of(k3sJoinScript)
-        );
+                List.of(k3sJoinScript),
+                debug);
 
         String certificatePath = checkCertificatePath(firstMaster);
         Map<String, Object> dataModel = new HashMap<>();
@@ -646,7 +646,7 @@ public class KubernetesInstaller {
 
 
     private void printDebug(String command) {
-        if (debug) {
+        if (!debug) {
             return;
         }
         System.out.println(command);

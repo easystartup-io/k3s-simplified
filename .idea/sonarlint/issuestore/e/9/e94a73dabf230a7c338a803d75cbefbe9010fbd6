@@ -3,9 +3,10 @@ h	java:S112ª"FDefine and throw a dedicated exception instead of using a gener
 h	java:S112±"FDefine and throw a dedicated exception instead of using a generic one.(Úú¸ªøÿÿÿÿ8€ÑÀ¤Ï1
 h	java:S112Ñ"FDefine and throw a dedicated exception instead of using a generic one.(Ò‚Òéüÿÿÿÿ8€ÑÀ¤Ï1
 f
-java:S1192¯"HDefine a constant instead of duplicating this literal "microos" 4 times.(ä…é§8€ÑÀ¤Ï1
-_	java:S107ì"=Method has 16 parameters, which is greater than 7 authorized.(®™Í»ÿÿÿÿÿ8¨ÑÀ¤Ï1
+java:S1192³"HDefine a constant instead of duplicating this literal "microos" 4 times.(ä…é§8€ÑÀ¤Ï1
+_	java:S107ì"=Method has 17 parameters, which is greater than 7 authorized.(®™Í»ÿÿÿÿÿ8¨ÑÀ¤Ï1
 U
 java:S1135’"2Complete the task associated to this TODO comment.(³Öò»ùÿÿÿÿ8¾Ä‚¶Ï1
+M	java:S106­"+Replace this use of System.out by a logger.(¹ºˆ¿ûÿÿÿÿ8§›•úÏ1
 K
 java:S1068")Remove this unused "token" private field.(°É©ñÿÿÿÿÿ8ÄÑÀ¤Ï1

@@ -161,8 +161,8 @@ public class CreateNewCluster {
                 location,
                 mainSettings.getSnapshotOs(),
                 mainSettings.getSshPort(),
-                "worker"
-        );
+                "worker",
+                mainSettings.isDebug());
         System.out.println("...server " + nodeName + " created.");
         return server;
     }
@@ -221,7 +221,8 @@ public class CreateNewCluster {
                 location,
                 mainSettings.getSnapshotOs(),
                 mainSettings.getSshPort(),
-                "master"
+                "master",
+                mainSettings.isDebug()
         );
         System.out.println("...server " + masterName + " created.");
         return server;

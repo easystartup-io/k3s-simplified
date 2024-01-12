@@ -247,7 +247,7 @@ public class HetznerClient {
             boolean enablePublicNetIpv4,
             boolean enablePublicNetIpv6,
             String location,
-            String snapshotOs, int sshPort, String role) {
+            String snapshotOs, int sshPort, String role, boolean debug) {
         CreateServerRequest.CreateServerRequestBuilder builder = CreateServerRequest
                 .builder()
                 .name(serverName)
@@ -260,7 +260,7 @@ public class HetznerClient {
                 .placementGroup(placementGroup.getId())
                 .label("cluster", clusterName)
                 .label("role", role)
-                .userData(cloudInit(sshPort, snapshotOs, additionalPackages, masterPostCreateCommands, List.of()))
+                .userData(cloudInit(sshPort, snapshotOs, additionalPackages, masterPostCreateCommands, List.of(), debug))
                 .sshKeys(Collections.singletonList(sshKey.getId()))
                 .publicNet(ServerPublicNetRequest.builder()
                         .enableIPv4(enablePublicNetIpv4)
@@ -289,14 +289,18 @@ public class HetznerClient {
     }
 
 
-    public static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands) {
+    public static String cloudInit(int sshPort, String snapshotOs, List<String> additionalPackages, List<String> additionalPostCreateCommands, List<String> finalCommands, boolean debug) {
         Map<String, Object> data = new HashMap<>();
         data.put("ssh_port", Integer.toString(sshPort));
         data.put("eth1_str", eth1(snapshotOs));
         data.put("growpart_str", growpart(snapshotOs));
         data.put("packages_str", generatePackagesStr(snapshotOs, additionalPackages));
         data.put("post_create_commands_str", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
-        return TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
+        String cloudInit = TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
+        if (debug){
+            System.out.println(cloudInit);
+        }
+        return cloudInit;
     }
 
     public static String growpart(String snapshotOs) {

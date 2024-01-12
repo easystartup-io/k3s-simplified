@@ -85,6 +85,7 @@ tar -xf k3s-simplified.tar.gz
 cd k3s-simplified
 chmod +x install.sh
 sudo ./install.sh
+cd ..
 ```
 ### Windows
 
