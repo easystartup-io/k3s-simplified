@@ -69,7 +69,7 @@ public class Main {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                return new String[]{"k3s-simplifier v" + properties.getProperty("version")};
+                return new String[]{"k3s-simplifier " + properties.getProperty("version")};
             }
         }
     }
