@@ -123,6 +123,7 @@ public class KubernetesInstaller {
         boolean clusterDoingInit = true;
         if (StringUtils.isNotBlank(k3sTokenByFallingBackToDifferentMasters) && masterServerIndex != null && masterServerIndex != 0) {
             // Means that first master was deleted and it needs to join back the cluster now, there is some other current etcd leader
+            System.out.println(ConsoleColors.RED + "First master was deleted but other masters are working, so rejoining the first master back to existing cluster" + ConsoleColors.RESET);
             clusterDoingInit = false;
         }
 
