@@ -1,5 +1,6 @@
 package io.easystartup.cloud.hetzner;
 
+import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.TemplateUtil;
 import me.tomsdevsn.hetznercloud.HetznerCloudAPI;
 import me.tomsdevsn.hetznercloud.objects.enums.PlacementGroupType;
@@ -298,7 +299,7 @@ public class HetznerClient {
         data.put("post_create_commands_str", generatePostCreateCommandsStr(snapshotOs, additionalPostCreateCommands, finalCommands));
         String cloudInit = TemplateUtil.renderTemplate(TemplateUtil.CLOUD_INIT_YAML_PATH, data);
         if (debug){
-            System.out.println(cloudInit);
+            System.out.println(ConsoleColors.YELLOW + cloudInit + ConsoleColors.RESET);
         }
         return cloudInit;
     }

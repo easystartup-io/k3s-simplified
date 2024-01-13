@@ -10,6 +10,7 @@ import io.easystartup.utils.*;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -75,7 +76,7 @@ public class KubernetesInstaller {
 
         setUpOtherMasters(serverList);
 
-        String k3sToken = getK3sToken();
+        String k3sToken = getK3sTokenByFallingBackToDifferentMasters().getLeft();
 
         setUpWorkers(servers.get(CreateNewCluster.ServerType.WORKER), k3sToken);
 
@@ -116,7 +117,16 @@ public class KubernetesInstaller {
     private void setUpFirstMaster(Server firstMaster) {
         System.out.println("Deploying k3s to first master " + firstMaster.getName() + "...");
 
-        String command = masterInstallScript(firstMaster, true);
+        Triple<String, Server, Integer> tokenVsServerVsServerIndex = getK3sTokenByFallingBackToDifferentMasters();
+        Integer masterServerIndex = tokenVsServerVsServerIndex.getRight();
+        String k3sTokenByFallingBackToDifferentMasters = tokenVsServerVsServerIndex.getLeft();
+        boolean clusterDoingInit = true;
+        if (StringUtils.isNotBlank(k3sTokenByFallingBackToDifferentMasters) && masterServerIndex != null && masterServerIndex != 0) {
+            // Means that first master was deleted and it needs to join back the cluster now, there is some other current etcd leader
+            clusterDoingInit = false;
+        }
+
+        String command = masterInstallScript(firstMaster, clusterDoingInit, k3sTokenByFallingBackToDifferentMasters);
         printDebug(command);
         String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
 
@@ -176,9 +186,9 @@ public class KubernetesInstaller {
         }
         ExecutorService executor = Executors.newFixedThreadPool(masters.size() - 1);
         List<Future<?>> futures = new ArrayList<>();
-
+        String k3sTokenByFallingBackToDifferentMasters = getK3sTokenByFallingBackToDifferentMasters().getLeft();
         for (Server master : masters.subList(1, masters.size())) {
-            futures.add(executor.submit(() -> deployK3sToOtherMasters(master)));
+            futures.add(executor.submit(() -> deployK3sToOtherMasters(master, k3sTokenByFallingBackToDifferentMasters)));
         }
 
         // Wait for all tasks to complete
@@ -216,9 +226,9 @@ public class KubernetesInstaller {
         executor.shutdown();
     }
 
-    private void deployK3sToOtherMasters(Server master) {
+    private void deployK3sToOtherMasters(Server master, String k3sTokenByFallingBackToDifferentMasters) {
         System.out.println("Deploying k3s to master " + master.getName() + "...");
-        String command = masterInstallScript(master, false);
+        String command = masterInstallScript(master, false, k3sTokenByFallingBackToDifferentMasters);
         printDebug(master.getName() + "\n" + command);
         String ssh1 = ssh.ssh(master, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
         System.out.println(master.getName() + "\n" + ssh1);
@@ -507,8 +517,8 @@ public class KubernetesInstaller {
         return String.join(" ", sans);
     }
 
-    private String masterInstallScript(Server master, boolean firstMaster) {
-        String server = firstMaster ? " --cluster-init " : " --server https://" + getApiServerIpAddress() + ":6443 ";
+    private String masterInstallScript(Server master, boolean clusterDoingInit, String k3sTokenByFallingBackToDifferentMasters) {
+        String server = clusterDoingInit ? " --cluster-init " : " --server https://" + getApiServerIpAddress() + ":6443 ";
         String flannelBackend = findFlannelBackend();
         String extraArgs = computeExtraArgs();
         String taint = mainSettings.isScheduleWorkloadsOnMasters() ? " " : " --node-taint CriticalAddonsOnly=true:NoExecute ";
@@ -516,7 +526,7 @@ public class KubernetesInstaller {
         Map<String, Object> map = new HashMap<>();
         map.put("cluster_name", mainSettings.getClusterName());
         map.put("k3s_version", mainSettings.getK3SVersion());
-        map.put("k3s_token", getK3sToken());
+        map.put("k3s_token", k3sTokenByFallingBackToDifferentMasters);
         map.put("disable_flannel", String.valueOf(mainSettings.getDisableFlannel()));
         map.put("flannel_backend", flannelBackend);
         map.put("taint", taint);
@@ -530,17 +540,30 @@ public class KubernetesInstaller {
         return TemplateUtil.renderTemplate(TemplateUtil.MASTER_INSTALL_SCRIPT, map);
     }
 
-    private String getK3sToken() {
+    /**
+     * When upgrading or deleted first master, need to join first master to existing cluster
+     * hence falling back to other masters to get token, then we can setup first master to join the cluster
+     */
+    private Triple<String, Server, Integer> getK3sTokenByFallingBackToDifferentMasters() {
         List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
-        Server firstMaster = serverList.get(0);
-        String command = "cat /var/lib/rancher/k3s/server/node-token";
-        String token = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String token = null;
+        int masterServerIndex = 0;
+        Server masterServerWithToken = null;
+        for (Server server : serverList) {
+            String command = "cat /var/lib/rancher/k3s/server/node-token";
+            token = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+            if (StringUtils.isNotBlank(token)) {
+                masterServerWithToken = server;
+                break;
+            }
+            masterServerIndex++;
+        }
 
         if (token == null || token.isEmpty()) {
             token = new BigInteger(130, new SecureRandom()).toString(32); // Random token generation
         }
 
-        return token;
+        return Triple.of(token, masterServerWithToken, masterServerIndex);
     }
 
     private String getApiServerIpAddress() {
@@ -646,6 +669,6 @@ public class KubernetesInstaller {
         if (!debug) {
             return;
         }
-        System.out.println(command);
+        System.out.println(ConsoleColors.YELLOW + command + ConsoleColors.RESET);
     }
 }
