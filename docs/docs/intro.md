@@ -1,7 +1,9 @@
 ---
-position: 1
+sidebar_position: 0
 slug: /
 ---
+
+# Getting started
 
 # k3s-simplified: Hetzner Kubernetes Cluster Made Easy
 
