@@ -71,7 +71,7 @@ const config = {
         title: 'k3s-simplified',
         logo: {
           alt: 'k3s-simplified Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo.png',
         },
         items: [
           {
