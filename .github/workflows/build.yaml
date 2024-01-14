@@ -40,4 +40,4 @@ jobs:
           file: "build/distributions/k3s-simplified.tar.gz"
           tag: ${{ steps.version.outputs.v-version }}
           overwrite: true
-          body: "Creating the tar for ${{ github.sha }}"
+          body: "Auto creating the tar for ${{ github.sha }}"

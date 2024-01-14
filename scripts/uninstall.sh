@@ -7,14 +7,16 @@ JAVA_DIRECTORY=/usr/local/lib
 JAR_DIRECTORY=/usr/local/share
 SCRIPT_DIRECTORY=/usr/local/bin
 
-## remove java
+echo "Remove java"
 if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     rm -rf "${JAVA_DIRECTORY}/k3s-simplified-java"
 fi
-## remove jar
-rm "${JAR_DIRECTORY}/k3s-simplified.jar"
-## remove run script
-rm "${SCRIPT_DIRECTORY}/k3s-simplified"
+
+echo "Remove jar"
+rm -f "${JAR_DIRECTORY}/k3s-simplified.jar"
+
+echo "Remove run script"
+rm -f "${SCRIPT_DIRECTORY}/k3s-simplified"
 
 rm install.sh
 rm uninstall.sh
@@ -33,3 +35,5 @@ if [ $num_items -eq 0 ]; then
     cd ..
 #    rmdir "$current_dir"
 fi
+
+echo "Finished uninstalling"

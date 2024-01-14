@@ -35,26 +35,21 @@ else
     exit 1
 fi
 
+DOWNLOAD_URL="${DOWNLOAD_URL}_bin.tar.gz"
+
 # Check if Java is already installed
 if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     echo "Java is already installed."
 else
-    # Check if the OS is Linux and architecture is aarch64
-    DOWNLOAD_URL="${DOWNLOAD_URL}_bin.tar.gz"
-    # Download OpenJDK 21 if URL is set
-    if [ ! -z "$DOWNLOAD_URL" ]; then
-        echo "Downloading OpenJDK 21..."
-        wget -O openjdk-21.tar.gz $DOWNLOAD_URL
+    echo "Downloading OpenJDK 21..."
+    wget -O openjdk-21.tar.gz $DOWNLOAD_URL
 
-        mkdir -p bundled-jre
-        # Extract OpenJDK 21
-        echo "Extracting OpenJDK 21..."
-        tar -xzf openjdk-21.tar.gz -C bundled-jre --strip-components=1
-        rm openjdk-21.tar.gz
-    else
-        echo "Download URL not set. Exiting."
-        exit 1
-    fi
+    mkdir -p bundled-jre
+
+    echo "Extracting OpenJDK 21..."
+
+    tar -xzf openjdk-21.tar.gz -C bundled-jre --strip-components=1
+    rm openjdk-21.tar.gz
 fi
 
 mkdir -p $JAR_DIRECTORY
@@ -62,13 +57,16 @@ mkdir -p $JAVA_DIRECTORY
 mkdir -p $SCRIPT_DIRECTORY
 
 # move items
-## move java
+
+echo "Moving java to ${JAVA_DIRECTORY}/k3s-simplified-java"
 if [ ! -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     mv "${JAVA_DIR_LOCAL_BASE}" "${JAVA_DIRECTORY}/k3s-simplified-java"
 fi
-## move jar
+
+echo "Moving jar to ${JAR_DIRECTORY}/k3s-simplified.jar"
 mv k3s-simplified.jar "${JAR_DIRECTORY}/k3s-simplified.jar"
-## move run script
+
+echo "Moving CLI binary script to ${SCRIPT_DIRECTORY}/k3s-simplified"
 mv k3s-simplified.sh "${SCRIPT_DIRECTORY}/k3s-simplified"
 chmod +x "${SCRIPT_DIRECTORY}/k3s-simplified"
 
@@ -87,3 +85,6 @@ if [ $num_items -eq 0 ]; then
     cd ..
 #    rmdir "$current_dir"
 fi
+
+printf "\nInstallation completed successfully...\n"
+printf "\nTo get started just run 'k3s-simplified'"
