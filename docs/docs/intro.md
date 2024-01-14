@@ -28,7 +28,7 @@ k3s-simplified is a command-line tool for rapid Kubernetes cluster creation and 
 
 ## Acknowledgments and Licensing
 
-- Inspired by [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s).
+- Originated from [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s).
 - Utilizes [hetznercloud-java](https://github.com/tomsiewert/hetznercloud-java) for hetzner cloud APIs.
 - Licensed under the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt).
 
