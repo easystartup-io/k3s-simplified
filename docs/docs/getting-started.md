@@ -19,7 +19,7 @@ title: Getting started
 
 1. **Binary Installation for macOS and Linux** (Apple Silicon/MacOS/LINUX M1/amd64/aarch64):
     ```bash
-    wget https://github.com/easyStartup-pulse/k3s-simplified/releases/latest/download/k3s-simplifier.tar.gz
+    wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplifier.tar.gz
     tar -xf k3s-simplifier.tar.gz
     cd k3s-simplifier
     chmod +x install.sh
@@ -42,7 +42,7 @@ kubeconfig_path: "./kubeconfig"
 k3s_version: v1.29.0+k3s1
 public_ssh_key_path: "~/.ssh/id_rsa.pub"
 private_ssh_key_path: "~/.ssh/id_rsa"
-use_ssh_agent: false # set to true if your key has a passphrase or if SSH connections don't work or seem to hang without agent. See https://github.com/easyStartup-pulse/k3s-simplified#limitations
+use_ssh_agent: false # set to true if your key has a passphrase or if SSH connections don't work or seem to hang without agent. See https://github.com/easystartup-io/k3s-simplified#limitations
 # ssh_port: 22
 ssh_allowed_networks:
   - 0.0.0.0/0 # ensure your current IP is included in the range

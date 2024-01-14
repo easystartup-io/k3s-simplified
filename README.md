@@ -1,14 +1,14 @@
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/easyStartup-pulse/k3s-simplified)
-![GitHub Release Date](https://img.shields.io/github/release-date/easyStartup-pulse/k3s-simplified)
-![GitHub last commit](https://img.shields.io/github/last-commit/easyStartup-pulse/k3s-simplified)
-![GitHub issues](https://img.shields.io/github/issues-raw/easyStartup-pulse/k3s-simplified)
-![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/easyStartup-pulse/k3s-simplified)
-![GitHub](https://img.shields.io/github/license/easyStartup-pulse/k3s-simplified)
-![GitHub Discussions](https://img.shields.io/github/discussions/easyStartup-pulse/k3s-simplified)
-![GitHub top language](https://img.shields.io/github/languages/top/easyStartup-pulse/k3s-simplified)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/easystartup-io/k3s-simplified)
+![GitHub Release Date](https://img.shields.io/github/release-date/easystartup-io/k3s-simplified)
+![GitHub last commit](https://img.shields.io/github/last-commit/easystartup-io/k3s-simplified)
+![GitHub issues](https://img.shields.io/github/issues-raw/easystartup-io/k3s-simplified)
+![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/easystartup-io/k3s-simplified)
+![GitHub](https://img.shields.io/github/license/easystartup-io/k3s-simplified)
+![GitHub Discussions](https://img.shields.io/github/discussions/easystartup-io/k3s-simplified)
+![GitHub top language](https://img.shields.io/github/languages/top/easystartup-io/k3s-simplified)
 
-![GitHub forks](https://img.shields.io/github/forks/easyStartup-pulse/k3s-simplified?style=social)
-![GitHub Repo stars](https://img.shields.io/github/stars/easyStartup-pulse/k3s-simplified?style=social)
+![GitHub forks](https://img.shields.io/github/forks/easystartup-io/k3s-simplified?style=social)
+![GitHub Repo stars](https://img.shields.io/github/stars/easystartup-io/k3s-simplified?style=social)
 
 ---
 
@@ -50,7 +50,7 @@ takes **2-3 minutes** only. This includes
 - installing the [Cluster Autoscaler](https://github.com/kubernetes/autoscaler) to allow for autoscaling node pools
 
 Also see
-this [wiki page](https://github.com/easyStartup-pulse/k3s-simplified/blob/main/wiki/Setting%20up%20a%20cluster.md) for a
+this [wiki page](https://github.com/easystartup-io/k3s-simplified/blob/main/wiki/Setting%20up%20a%20cluster.md) for a
 tutorial on how to set up a cluster with the most common setup to get you started.
 
 ___
@@ -80,7 +80,7 @@ perform k3s upgrades.
 ##### Apple Silicon/MacOS/LINUX M1/amd64/aarch64
 
 ```bash
-wget https://github.com/easyStartup-pulse/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
+wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
 tar -xf k3s-simplified.tar.gz
 cd k3s-simplified
 chmod +x install.sh
@@ -106,7 +106,7 @@ kubeconfig_path: "./kubeconfig"
 k3s_version: v1.26.4+k3s1
 public_ssh_key_path: "~/.ssh/id_rsa.pub"
 private_ssh_key_path: "~/.ssh/id_rsa"
-use_ssh_agent: false # set to true if your key has a passphrase or if SSH connections don't work or seem to hang without agent. See https://github.com/easyStartup-pulse/k3s-simplified#limitations
+use_ssh_agent: false # set to true if your key has a passphrase or if SSH connections don't work or seem to hang without agent. See https://github.com/easystartup-io/k3s-simplified#limitations
 # ssh_port: 22
 ssh_allowed_networks:
   - 0.0.0.0/0 # ensure your current IP is included in the range
@@ -521,8 +521,8 @@ ___
 ## License
 
 This tool is available as open source under the terms of
-the [MIT License](https://github.com/easyStartup-pulse/k3s-simplified/blob/main/LICENSE.txt).
+the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt).
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/easyStartup-pulse/k3s-simplified.svg)](https://starchart.cc/easyStartup-pulse/k3s-simplified)
+[![Stargazers over time](https://starchart.cc/easystartup-io/k3s-simplified.svg)](https://starchart.cc/easystartup-io/k3s-simplified)

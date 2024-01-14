@@ -45,7 +45,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/easyStartup-pulse/k3s-simplified/tree/main/docs/',
+            'https://github.com/easystartup-io/k3s-simplified/tree/main/docs/',
         },
         blog: false,
         // blog: {
@@ -82,7 +82,7 @@ const config = {
           },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/easyStartup-pulse/k3s-simplified',
+            href: 'https://github.com/easystartup-io/k3s-simplified',
             label: 'GitHub',
             position: 'right',
           },
@@ -126,7 +126,7 @@ const config = {
               // },
               {
                 label: 'GitHub',
-                href: 'https://github.com/easyStartup-pulse/k3s-simplified',
+                href: 'https://github.com/easystartup-io/k3s-simplified',
               },
             ],
           },

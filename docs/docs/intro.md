@@ -30,7 +30,7 @@ k3s-simplified is a command-line tool for rapid Kubernetes cluster creation and 
 
 - Inspired by [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s).
 - Utilizes [hetznercloud-java](https://github.com/tomsiewert/hetznercloud-java) for hetzner cloud APIs.
-- Licensed under the [MIT License](https://github.com/easyStartup-pulse/k3s-simplified/blob/main/LICENSE.txt).
+- Licensed under the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt).
 
 <!-- ---
 
@@ -38,20 +38,20 @@ k3s-simplified is a command-line tool for rapid Kubernetes cluster creation and 
 
 Join our growing community and track our progress!
 
-[![Stargazers over time](https://starchart.cc/easyStartup-pulse/k3s-simplified.svg)](https://starchart.cc/easyStartup-pulse/k3s-simplified) -->
+[![Stargazers over time](https://starchart.cc/easystartup-io/k3s-simplified.svg)](https://starchart.cc/easystartup-io/k3s-simplified) -->
 
 
 ---
 
-![GitHub License](https://img.shields.io/github/license/easyStartup-pulse/k3s-simplified)
-![GitHub Latest Release](https://img.shields.io/github/v/release/easyStartup-pulse/k3s-simplified)
-![GitHub Release Date](https://img.shields.io/github/release-date/easyStartup-pulse/k3s-simplified)
-![GitHub Last Commit](https://img.shields.io/github/last-commit/easyStartup-pulse/k3s-simplified)
+![GitHub License](https://img.shields.io/github/license/easystartup-io/k3s-simplified)
+![GitHub Latest Release](https://img.shields.io/github/v/release/easystartup-io/k3s-simplified)
+![GitHub Release Date](https://img.shields.io/github/release-date/easystartup-io/k3s-simplified)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/easystartup-io/k3s-simplified)
 
-![GitHub Issues](https://img.shields.io/github/issues-raw/easyStartup-pulse/k3s-simplified)
-![GitHub Pull Requests](https://img.shields.io/github/issues-pr-raw/easyStartup-pulse/k3s-simplified)
-![GitHub Discussions](https://img.shields.io/github/discussions/easyStartup-pulse/k3s-simplified)
+![GitHub Issues](https://img.shields.io/github/issues-raw/easystartup-io/k3s-simplified)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr-raw/easystartup-io/k3s-simplified)
+![GitHub Discussions](https://img.shields.io/github/discussions/easystartup-io/k3s-simplified)
 
-![GitHub Top Language](https://img.shields.io/github/languages/top/easyStartup-pulse/k3s-simplified)
-![GitHub Forks](https://img.shields.io/github/forks/easyStartup-pulse/k3s-simplified?style=social)
-![GitHub Repo Stars](https://img.shields.io/github/stars/easyStartup-pulse/k3s-simplified?style=social)
+![GitHub Top Language](https://img.shields.io/github/languages/top/easystartup-io/k3s-simplified)
+![GitHub Forks](https://img.shields.io/github/forks/easystartup-io/k3s-simplified?style=social)
+![GitHub Repo Stars](https://img.shields.io/github/stars/easystartup-io/k3s-simplified?style=social)
