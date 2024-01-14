@@ -32,22 +32,41 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for changes in 'docs' directory
+        id: check_changes
+        run: |
+          if git diff-tree --name-only --no-commit-id ${{ github.sha }} | grep -q "^docs"; then
+            echo "changes_made=yes" >> "$GITHUB_ENV"
+          else
+            echo "changes_made=no" >> "$GITHUB_ENV"
+          fi
       - uses: actions/setup-node@v3
+        if: ${{env.changes_made == 'yes'}}
         with:
           node-version: 18
       - name: Install dependencies
+        if: ${{env.changes_made == 'yes'}}
         working-directory: docs
         run: npm ci
       - name: Build website
+        if: ${{env.changes_made == 'yes'}}
         working-directory: docs
         run: npm run build
       - name: Setup Pages
+        if: ${{env.changes_made == 'yes'}}
         uses: actions/configure-pages@v4
       - name: Upload artifact
+        if: ${{env.changes_made == 'yes'}}
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
           path: './docs/build'
       - name: Deploy to GitHub Pages
+        if: ${{env.changes_made == 'yes'}}
         id: deployment
         uses: actions/deploy-pages@v4
+      - id: job_successful
+        if: ${{env.changes_made == 'yes'}}
+        run: echo "job_successful=yes" >> "$GITHUB_OUTPUT"
