@@ -8,7 +8,7 @@ sidebar_position: 99
 ## Production issue debug
 
 #### Pricing: $50/per hour
-#### Email: [k3s-simplified@easystartup.io](mailTo:k3s-simplified@easystartup.io)
+#### Email: [k3s-simplified-prod-issue@easystartup.io](mailTo:k3s-simplified-prod-issue@easystartup.io)
 
 ## General consultancy
 
