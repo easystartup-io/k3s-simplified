@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+slug: /
 ---
 
-# Intro
+This page will be the home page when users visit https://example.com/.
