@@ -5,12 +5,12 @@ sidebar_position: 99
 
 # Consultancy
 
-## Production issue debug
+## Production issue debugging
 
 #### Pricing: $50/per hour
 #### Email: [k3s-simplified-prod-issue@easystartup.io](mailTo:k3s-simplified-prod-issue@easystartup.io)
 
-## General consultancy
+## General consultancy for k3s in hetzner
 
 #### Pricing: $25/per hour
 #### Email: [k3s-simplified@easystartup.io](mailTo:k3s-simplified@easystartup.io)

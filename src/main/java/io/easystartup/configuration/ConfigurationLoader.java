@@ -7,6 +7,8 @@ package io.easystartup.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.easystartup.cloud.hetzner.HetznerClient;
+import io.easystartup.cloud.hetzner.location.Location;
+import io.easystartup.cloud.hetzner.network.Network;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.util.SubnetUtils;
 
@@ -68,7 +70,8 @@ public class ConfigurationLoader {
         validateNetwork(errors, settings.getSSHAllowedNetworks(), "SSH");
         validateNetwork(errors, settings.getAPIAllowedNetworks(), "API");
         Set<String> serverTypes = hetznerClient.getServerTypes();
-        Set<String> locations = hetznerClient.getLocations();
+        Location location = new Location(hetznerClient);
+        Set<String> locations = location.getLocations();
         validateMastersPool(errors, serverTypes, locations);
         validateWorkersPool(errors, serverTypes, locations);
     }
@@ -262,8 +265,9 @@ public class ConfigurationLoader {
         if (isBlank(settings.getExistingNetworkName())) {
             return;
         }
-        Set<String> networks = this.hetznerClient.getNetworks();
-        if (!networks.contains(settings.getExistingNetworkName())) {
+        Network network = new Network(hetznerClient);
+        me.tomsdevsn.hetznercloud.objects.general.Network nw = network.find(settings.getExistingNetworkName());
+        if (nw == null) {
             String format = String.format("You have specified that you want to use the existing network named '%s' but this network doesn't exist", settings.getExistingNetworkName());
             errors.add(format);
             return;

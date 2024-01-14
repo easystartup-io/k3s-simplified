@@ -3,19 +3,15 @@ package io.easystartup.cloud.hetzner;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.TemplateUtil;
 import me.tomsdevsn.hetznercloud.HetznerCloudAPI;
-import me.tomsdevsn.hetznercloud.objects.enums.PlacementGroupType;
-import me.tomsdevsn.hetznercloud.objects.enums.SubnetType;
-import me.tomsdevsn.hetznercloud.objects.enums.TargetType;
 import me.tomsdevsn.hetznercloud.objects.general.*;
-import me.tomsdevsn.hetznercloud.objects.request.*;
-import me.tomsdevsn.hetznercloud.objects.response.*;
+import me.tomsdevsn.hetznercloud.objects.request.CreateServerRequest;
+import me.tomsdevsn.hetznercloud.objects.request.CreateServerRequestFirewall;
+import me.tomsdevsn.hetznercloud.objects.request.ServerPublicNetRequest;
+import me.tomsdevsn.hetznercloud.objects.response.ServerTypesResponse;
+import me.tomsdevsn.hetznercloud.objects.response.ServersResponse;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -27,202 +23,19 @@ import static io.easystartup.utils.Util.sleep;
  */
 public class HetznerClient {
 
-    private String token;
-    private HetznerCloudAPI hetznerCloudAPI;
+    private final HetznerCloudAPI hetznerCloudAPI;
 
     public HetznerClient(String token) {
-        this.token = token;
         this.hetznerCloudAPI = new HetznerCloudAPI(token);
     }
 
-    public Set<String> getNetworks() {
-        NetworksResponse networks = hetznerCloudAPI.getNetworks();
-        return networks.getNetworks().stream().map(Network::getName).collect(Collectors.toSet());
+    public HetznerCloudAPI getHetznerCloudAPI() {
+        return hetznerCloudAPI;
     }
 
     public Set<String> getServerTypes() {
         ServerTypesResponse serverTypes = hetznerCloudAPI.getServerTypes();
         return serverTypes.getServerTypes().stream().map(ServerType::getName).collect(Collectors.toSet());
-    }
-
-    public Set<String> getLocations() {
-        LocationsResponse locations = hetznerCloudAPI.getLocations();
-        return locations.getLocations().stream().map(Location::getName).collect(Collectors.toSet());
-    }
-
-    public Location getLocation(String location) {
-        LocationsResponse locations = hetznerCloudAPI.getLocations();
-        Optional<Location> first = locations.getLocations().stream().filter(val -> val.getName().equals(location)).findFirst();
-        return first.orElse(null);
-    }
-
-    public Network findNetwork(String existingNetworkName) {
-        NetworksResponse networks = hetznerCloudAPI.getNetworks();
-        Optional<Network> first = networks.getNetworks().stream().filter(val -> val.getName().equals(existingNetworkName)).findFirst();
-        return first.orElse(null);
-    }
-
-    public Network createNetwork(String name, String privateNetworkSubnet, String networkZone) {
-        CreateNetworkRequest.CreateNetworkRequestBuilder builder = CreateNetworkRequest.builder();
-        builder.name(name);
-        builder.ipRange(privateNetworkSubnet);
-        Subnet subnet = new Subnet();
-        subnet.setType(SubnetType.cloud);
-        subnet.setNetworkZone(networkZone);
-        subnet.setIpRange(privateNetworkSubnet);
-        builder.subnets(List.of(subnet));
-        NetworkResponse network = hetznerCloudAPI.createNetwork(builder.build());
-        return network.getNetwork();
-    }
-
-    public Firewall findFireWall(String name) {
-        FirewallsResponse firewalls = hetznerCloudAPI.getFirewalls();
-        Optional<Firewall> first = firewalls.getFirewalls().stream().filter(firewall -> firewall.getName().equals(name)).findFirst();
-        return first.orElse(null);
-    }
-
-    public Firewall createFirewall(String firewallName, String[] sshAllowedNetworks, String[] apiAllowedNetworks, boolean highAvailability, int sshPort, String privateNetworkSubnet) {
-        CreateFirewallRequest.CreateFirewallRequestBuilder builder = CreateFirewallRequest.builder();
-        builder.name(firewallName);
-
-        builder.firewallRules(getFirewallRules(sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet));
-        CreateFirewallResponse firewall = hetznerCloudAPI.createFirewall(builder.build());
-        return firewall.getFirewall();
-    }
-
-    private FirewallRule allowKubernetesAPI(String[] apiAllowedNetworks) {
-        FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
-        builder.description("Allow port 6443 (Kubernetes API server)");
-        builder.direction(FirewallRule.Direction.in);
-        builder.protocol(FirewallRule.Protocol.tcp);
-        builder.sourceIPs(List.of(apiAllowedNetworks));
-        builder.destinationIPs(new ArrayList<>());
-        builder.port("6443");
-        return builder.build();
-    }
-
-    private FirewallRule allowUDPBetweenNodes(String privateNetworkSubnet) {
-        FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
-        builder.description("Allow all UDP traffic between nodes on the private network");
-        builder.direction(FirewallRule.Direction.in);
-        builder.protocol(FirewallRule.Protocol.udp);
-        builder.sourceIPs(List.of(privateNetworkSubnet));
-        builder.destinationIPs(new ArrayList<>());
-        builder.port("any");
-        return builder.build();
-    }
-
-    private FirewallRule allowAllTrafficBetweenNodes(String privateNetworkSubnet) {
-        FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
-        builder.description("Allow all TCP traffic between nodes on the private network");
-        builder.direction(FirewallRule.Direction.in);
-        builder.protocol(FirewallRule.Protocol.tcp);
-        builder.sourceIPs(List.of(privateNetworkSubnet));
-        builder.destinationIPs(new ArrayList<>());
-        builder.port("any");
-        return builder.build();
-    }
-
-    private FirewallRule allowICMPPing() {
-        FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
-        builder.description("Allow ICMP (ping)");
-        builder.direction(FirewallRule.Direction.in);
-        builder.protocol(FirewallRule.Protocol.icmp);
-        builder.sourceIPs(List.of("0.0.0.0/0", "::/0"));
-        builder.destinationIPs(new ArrayList<>());
-        return builder.build();
-    }
-
-    private FirewallRule allowSSHPort(String[] sshAllowedNetworks, int sshPort) {
-        FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
-        builder.description("Allow SSH port");
-        builder.direction(FirewallRule.Direction.in);
-        builder.protocol(FirewallRule.Protocol.tcp);
-        builder.sourceIPs(Arrays.stream(sshAllowedNetworks).toList());
-        builder.destinationIPs(new ArrayList<>());
-        builder.port(String.valueOf(sshPort));
-        return builder.build();
-    }
-
-    public void updateFirewall(Long firewallId, String[] sshAllowedNetworks, String[] apiAllowedNetworks, boolean highAvailability, int sshPort, String privateNetworkSubnet) {
-        List<FirewallRule> firewallRules = getFirewallRules(sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet);
-        hetznerCloudAPI.setFirewallRules(firewallId, firewallRules);
-    }
-
-    private List<FirewallRule> getFirewallRules(String[] sshAllowedNetworks, String[] apiAllowedNetworks, boolean highAvailability, int sshPort, String privateNetworkSubnet) {
-        List<FirewallRule> firewallRules = new ArrayList<>();
-
-        firewallRules.add(allowSSHPort(sshAllowedNetworks, sshPort));
-        firewallRules.add(allowICMPPing());
-        firewallRules.add(allowAllTrafficBetweenNodes(privateNetworkSubnet));
-        firewallRules.add(allowUDPBetweenNodes(privateNetworkSubnet));
-        if (highAvailability) {
-            firewallRules.add(allowKubernetesAPI(apiAllowedNetworks));
-        }
-        return firewallRules;
-    }
-
-    public SSHKey getSSHKey(String publicSSHKeyPath) {
-        SSHKeysResponse sshKey = hetznerCloudAPI.getSSHKeys();
-        String fingerPrint = null;
-        try {
-            fingerPrint = calculateFingerprint(publicSSHKeyPath);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        String finalFingerPrint = fingerPrint;
-        Optional<SSHKey> first = sshKey.getSshKeys().stream().filter(sshKey1 -> sshKey1.getFingerprint().equals(finalFingerPrint)).findFirst();
-        return first.orElse(null);
-    }
-
-    private static String calculateFingerprint(String publicSSHKeyPath) throws Exception {
-        byte[] keyBytes = Files.readAllBytes(Paths.get(publicSSHKeyPath));
-        String keyContent = new String(keyBytes);
-        String privateKey = keyContent.split("\\s+")[1];
-
-        byte[] decodedKey = Base64.getDecoder().decode(privateKey);
-        byte[] digest = MessageDigest.getInstance("MD5").digest(decodedKey);
-
-        // Convert the byte array to a hex string with colons
-        StringBuilder hexString = new StringBuilder();
-        for (int i = 0; i < digest.length; i++) {
-            String hex = Integer.toHexString(0xff & digest[i]);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-            if (i < digest.length - 1) {
-                hexString.append(":");
-            }
-        }
-
-        return hexString.toString();
-    }
-
-    public SSHKey createSSHKey(String clusterName, String publicSSHKeyPath) {
-        try {
-            String publicKey = new String(Files.readAllBytes(Paths.get(publicSSHKeyPath))).trim();
-            CreateSSHKeyRequest.CreateSSHKeyRequestBuilder builder = CreateSSHKeyRequest.builder();
-            builder.name(clusterName);
-            builder.publicKey(publicKey);
-            return hetznerCloudAPI.createSSHKey(builder.build()).getSshKey();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public PlacementGroup createPlacementGroup(String name) {
-        CreatePlacementGroupRequest.CreatePlacementGroupRequestBuilder builder = CreatePlacementGroupRequest.builder();
-        builder.name(name);
-        builder.type(PlacementGroupType.spread);
-        PlacementGroupResponse placementGroup = hetznerCloudAPI.createPlacementGroup(builder.build());
-        return placementGroup.getPlacementGroup();
-    }
-
-    public PlacementGroup findPlacementGroup(String name) {
-        PlacementGroupsResponse placementGroups = hetznerCloudAPI.getPlacementGroups();
-        Optional<PlacementGroup> first = placementGroups.getPlacementGroups().stream().filter(placementGroup -> placementGroup.getName().equals(name)).findFirst();
-        return first.orElse(null);
     }
 
     public Server findServer(String serverName) {
@@ -232,6 +45,10 @@ public class HetznerClient {
             return null;
         }
         return servers.get(0);
+    }
+
+    public void deleteServer(long id) {
+        hetznerCloudAPI.deleteServer(id);
     }
 
     public Server createServer(
@@ -357,35 +174,4 @@ public class HetznerClient {
                 .collect(Collectors.joining(", "));
     }
 
-    public LoadBalancer createK8sAPILoadBalancer(String clusterName, Long networkId, boolean privateApiLoadBalancer, String location) {
-        CreateLoadBalancerRequest.CreateLoadBalancerRequestBuilder builder = CreateLoadBalancerRequest.builder();
-        builder.loadBalancerType("lb11");
-        builder.location(location);
-        builder.name(clusterName + "-api");
-        builder.network(networkId);
-        builder.publicInterface(!privateApiLoadBalancer);
-
-        LBService lbService = new LBService();
-        lbService.setDestinationPort(6443L);
-        lbService.setListenPort(6443L);
-        lbService.setProtocol("tcp");
-        lbService.setProxyprotocol(false);
-        builder.services(List.of(lbService));
-
-        LBTarget lbTarget = new LBTarget();
-        lbTarget.setType(TargetType.label_selector);
-        lbTarget.setLabelSelector(new LBTargetLabelSelector("cluster=" + clusterName + ",role=master"));
-        lbTarget.setUsePrivateIp(true);
-        builder.targets(List.of(lbTarget));
-
-        builder.algorithm(new CreateLoadBalancerRequestAlgorithmType("round_robin"));
-        LoadBalancerResponse loadBalancer = hetznerCloudAPI.createLoadBalancer(builder.build());
-        return loadBalancer.getLoadBalancer();
-    }
-
-    public LoadBalancer findLoadBalancer(String loadBalancerName) {
-        LoadBalancersResponse loadBalancers = hetznerCloudAPI.getLoadBalancers();
-        Optional<LoadBalancer> first = loadBalancers.getLoadBalancers().stream().filter(loadBalancer -> loadBalancer.getName().equals(loadBalancerName)).findFirst();
-        return first.orElse(null);
-    }
 }

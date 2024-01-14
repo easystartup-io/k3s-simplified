@@ -1,6 +1,6 @@
-package io.easystartup.installer;
+package io.easystartup.kubernetes;
 
-import io.easystartup.CreateNewCluster;
+import io.easystartup.cluster.CreateCluster;
 import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.configuration.AutoScaling;
 import io.easystartup.configuration.KeyValuePair;
@@ -41,7 +41,7 @@ public class KubernetesInstaller {
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
     private final LoadBalancer loadBalancer;
-    private final Map<CreateNewCluster.ServerType, List<Server>> servers;
+    private final Map<CreateCluster.ServerType, List<Server>> servers;
 
     private final SSH ssh;
 
@@ -51,7 +51,7 @@ public class KubernetesInstaller {
 
     private final boolean debug;
 
-    public KubernetesInstaller(MainSettings mainSettings, HetznerClient hetznerClient, LoadBalancer loadBalancer, Map<CreateNewCluster.ServerType, List<Server>> servers, Network network, Firewall firewall, SSHKey sshKey) {
+    public KubernetesInstaller(MainSettings mainSettings, HetznerClient hetznerClient, LoadBalancer loadBalancer, Map<CreateCluster.ServerType, List<Server>> servers, Network network, Firewall firewall, SSHKey sshKey) {
         this.mainSettings = mainSettings;
         this.debug = mainSettings.isDebug();
         this.hetznerClient = hetznerClient;
@@ -69,7 +69,7 @@ public class KubernetesInstaller {
         System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Setting up Kubernetes ===\n" + ConsoleColors.RESET);
 
         Util.checkKubectl();
-        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         setUpFirstMaster(serverList.get(0));
 
         waitForControlPlaneFirstNodeToBeReady(serverList.get(0));
@@ -78,7 +78,7 @@ public class KubernetesInstaller {
 
         String k3sToken = getK3sTokenByFallingBackToDifferentMasters().getLeft();
 
-        setUpWorkers(servers.get(CreateNewCluster.ServerType.WORKER), k3sToken);
+        setUpWorkers(servers.get(CreateCluster.ServerType.WORKER), k3sToken);
 
         System.out.println("\n=== Deploying Hetzner drivers ===\n");
 
@@ -320,7 +320,7 @@ public class KubernetesInstaller {
 
     private void deployClusterAutoscaler(String k3sToken) {
         System.out.println("\nDeploying Cluster Autoscaler...");
-        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         Server firstMaster = serverList.get(0);
 
         NodePool[] workerNodePools = mainSettings.getWorkerNodePools();
@@ -410,7 +410,7 @@ public class KubernetesInstaller {
     }
 
     public void addLabelsAndTaintsToMasters() {
-        List<Server> masters = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> masters = servers.get(CreateCluster.ServerType.MASTER);
         KeyValuePair[] labels = mainSettings.getMastersPool().getLabels();
         KeyValuePair[] taints = mainSettings.getMastersPool().getTaints();
 
@@ -449,7 +449,7 @@ public class KubernetesInstaller {
 
     private void addLabelsAndTaintsToWorkers() {
         System.out.println("\nAdding labels and taints to workers...");
-        List<Server> workers = servers.get(CreateNewCluster.ServerType.WORKER);
+        List<Server> workers = servers.get(CreateCluster.ServerType.WORKER);
 
         for (NodePool nodePool : mainSettings.getWorkerNodePools()) {
             String instanceType = nodePool.getInstanceType();
@@ -505,7 +505,7 @@ public class KubernetesInstaller {
         if (isNotBlank(mainSettings.getApiServerHostname())) {
             sans.add("--tls-san=" + mainSettings.getApiServerHostname());
         }
-        List<Server> masters = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> masters = servers.get(CreateCluster.ServerType.MASTER);
         if (masters.size() > 1 && loadBalancer != null) {
             sans.add("--tls-san=" + loadBalancer.getPrivateNet().get(0).getIp());
         }
@@ -546,7 +546,7 @@ public class KubernetesInstaller {
      * hence falling back to other masters to get token, then we can setup first master to join the cluster
      */
     private Triple<String, Server, Integer> getK3sTokenByFallingBackToDifferentMasters() {
-        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         String token = null;
         int masterServerIndex = 0;
         Server masterServerWithToken = null;
@@ -568,7 +568,7 @@ public class KubernetesInstaller {
     }
 
     private String getApiServerIpAddress() {
-        List<Server> masterServer = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> masterServer = servers.get(CreateCluster.ServerType.MASTER);
         if (masterServer.size() > 1 && loadBalancer != null) {
             if (mainSettings.isPrivateApiLoadBalancer()
                     && isNotEmpty(loadBalancer.getPrivateNet())
@@ -595,7 +595,7 @@ public class KubernetesInstaller {
 
     private String workerInstallScript(String k3sToken) {
 
-        List<Server> serverList = servers.get(CreateNewCluster.ServerType.MASTER);
+        List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         Server firstMaster = serverList.get(0);
         String firstMasterPrivateIp = firstMaster.getPrivateNet().get(0).getIp();
 

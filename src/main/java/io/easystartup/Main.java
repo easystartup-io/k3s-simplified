@@ -32,7 +32,8 @@ public class Main {
             synopsisSubcommandLabel = "[Subcommand]",
             commandListHeading = "%nSubcommands:%n",
             subcommands = {
-                    CreateCluster.class
+                    CreateCluster.class,
+                    DeleteCluster.class
             }
     )
     public static class K3sSimplifier implements Callable<Integer> {
@@ -43,11 +44,6 @@ public class Main {
         public Integer call() throws Exception {
             throw new CommandLine.ParameterException(spec.commandLine(), "Please enter a command like \"create\" or \"delete\" etc...\n");
 //            return null;
-        }
-
-        @Command(name = "delete", description = "# Delete a cluster")
-        public void deleteCluster() {
-            System.out.println("Not yet implemented");
         }
 
         @Command(name = "releases", description = "# List the available k3s releases")
@@ -90,7 +86,30 @@ public class Main {
                 if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
                     return;
                 }
-                new CreateNewCluster(configurationLoader.getSettings()).initializeCluster();
+                new io.easystartup.cluster.CreateCluster(configurationLoader.getSettings()).initializeCluster();
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
+            }
+        }
+    }
+
+    @Command(name = "delete", description = "# Delete a cluster")
+    public static class DeleteCluster implements Runnable {
+        @CommandLine.Option(names = {"-c", "--config"}, required = true, description = "# The path of the YAML configuration file")
+        private String config;
+
+        @Override
+        public void run() {
+            try {
+                ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
+                configurationLoader.validate();
+                for (String error : configurationLoader.getErrors()) {
+                    System.out.println(error);
+                }
+                if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                    return;
+                }
+                new io.easystartup.cluster.DeleteCluster(configurationLoader.getSettings()).deleteCluster();
             } catch (Throwable throwable) {
                 System.out.println(throwable.getMessage());
             }

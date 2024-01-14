@@ -20,7 +20,7 @@
 
 Access comprehensive instructions at: **[https://k3s-simplified.easystartup.io](https://k3s-simplified.easystartup.io)**
 
-### Project Background
+## Project Background
 
 1. This project originated as a fork of [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s).
 2. Rewritten in Java for cross-platform compatibility and my familiarity with the language.

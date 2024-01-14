@@ -1,9 +1,10 @@
-package io.easystartup;
+package io.easystartup.cluster;
 
 import io.easystartup.cloud.hetzner.HetznerClient;
+import io.easystartup.cloud.hetzner.loadbalancer.Loadbalancer;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
-import io.easystartup.installer.KubernetesInstaller;
+import io.easystartup.kubernetes.KubernetesInstaller;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
 import me.tomsdevsn.hetznercloud.objects.general.*;
@@ -23,7 +24,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 /*
  * @author indianBond
  */
-public class CreateNewCluster {
+public class CreateCluster {
 
     public enum ServerType {
         MASTER,
@@ -42,7 +43,7 @@ public class CreateNewCluster {
 
     private final SSH ssh;
 
-    public CreateNewCluster(MainSettings mainSettings) {
+    public CreateCluster(MainSettings mainSettings) {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
         this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
@@ -69,8 +70,9 @@ public class CreateNewCluster {
         if (mainSettings.getMastersPool().getInstanceCount() == 1) {
             return null;
         }
+        Loadbalancer loadbalancer = new Loadbalancer(hetznerClient);
         String loadBalancerName = mainSettings.getClusterName() + "-api";
-        LoadBalancer loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
+        LoadBalancer loadBalancer = loadbalancer.find(loadBalancerName);
         if (loadBalancer != null) {
             System.out.println("Load balancer has private IP : " + ConsoleColors.BLUE + loadBalancer.getPrivateNet().getFirst().getIp() + ConsoleColors.RESET);
             if (!mainSettings.isPrivateApiLoadBalancer()) {
@@ -80,14 +82,14 @@ public class CreateNewCluster {
             return loadBalancer;
         }
         System.out.println("Creating load balancer for API server...");
-        loadBalancer = hetznerClient.createK8sAPILoadBalancer(mainSettings.getClusterName(),
+        loadBalancer = loadbalancer.createK8sAPILoadBalancer(mainSettings.getClusterName(),
                 network.getId(),
                 mainSettings.isPrivateApiLoadBalancer(),
                 mainSettings.getMastersPool().getLocation()
         );
         if (!mainSettings.isPrivateApiLoadBalancer()) {
             while (true) {
-                loadBalancer = hetznerClient.findLoadBalancer(loadBalancerName);
+                loadBalancer = loadbalancer.find(loadBalancerName);
                 if (loadBalancer != null && StringUtils.isNotBlank(loadBalancer.getPublicIpv4())) {
                     break;
                 }
@@ -245,31 +247,34 @@ public class CreateNewCluster {
     }
 
     private PlacementGroup createPlacementGroup(String placementGroupName) {
-        PlacementGroup placementGroup = hetznerClient.findPlacementGroup(placementGroupName);
+        io.easystartup.cloud.hetzner.placementgroup.PlacementGroup pg = new io.easystartup.cloud.hetzner.placementgroup.PlacementGroup(hetznerClient);
+        PlacementGroup placementGroup = pg.find(placementGroupName);
         if (placementGroup != null) {
             System.out.println("Placement group " + placementGroupName + " already exists, skipping.");
             return placementGroup;
         }
         System.out.println("Creating placement group " + placementGroupName + "...");
-        placementGroup = hetznerClient.createPlacementGroup(placementGroupName);
+        placementGroup = pg.create(placementGroupName);
         System.out.println("done creating placement group " + placementGroup.getName());
         return placementGroup;
     }
 
     private SSHKey createSSH() {
+        io.easystartup.cloud.hetzner.ssh.SSHKey keys = new io.easystartup.cloud.hetzner.ssh.SSHKey(hetznerClient);
         String clusterName = mainSettings.getClusterName();
         String publicSSHKeyPath = mainSettings.getPublicSSHKeyPath();
-        SSHKey sshKey = hetznerClient.getSSHKey(publicSSHKeyPath);
+        SSHKey sshKey = keys.find(publicSSHKeyPath);
         if (sshKey != null) {
             System.out.println("SSH Key already exists, skipping.");
             return sshKey;
         }
         System.out.println("Creating SSH Key...");
-        return hetznerClient.createSSHKey(clusterName, publicSSHKeyPath);
+        return keys.create(clusterName, publicSSHKeyPath);
     }
 
 
     private Firewall createFirewall() {
+        io.easystartup.cloud.hetzner.firewall.Firewall firewall = new io.easystartup.cloud.hetzner.firewall.Firewall(hetznerClient);
         String firewallName = mainSettings.getClusterName();
         String[] sshAllowedNetworks = mainSettings.getSSHAllowedNetworks();
         String[] apiAllowedNetworks = mainSettings.getAPIAllowedNetworks();
@@ -277,39 +282,42 @@ public class CreateNewCluster {
         int sshPort = mainSettings.getSshPort();
         String privateNetworkSubnet = mainSettings.getPrivateNetworkSubnet();
 
-        Firewall fireWall = hetznerClient.findFireWall(firewallName);
-        if (fireWall != null) {
+        Firewall fw = firewall.find(firewallName);
+        if (fw != null) {
             System.out.println("Updating firewall...");
-            hetznerClient.updateFirewall(fireWall.getId(), sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet);
+            firewall.update(fw.getId(), sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet);
         } else {
             System.out.println("Creating firewall...");
-            fireWall = hetznerClient.createFirewall(firewallName, sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet);
+            fw = firewall.create(firewallName, sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet);
         }
-        return fireWall;
+        return fw;
     }
 
     private Network findOrCreateNetwork() {
+        io.easystartup.cloud.hetzner.network.Network nw = new io.easystartup.cloud.hetzner.network.Network(hetznerClient);
         String existingNetworkName = mainSettings.getExistingNetworkName();
         if (StringUtils.isNotBlank(existingNetworkName)) {
-            return hetznerClient.findNetwork(existingNetworkName);
+            return nw.find(existingNetworkName);
         }
 
         return createNetwork();
     }
 
     private Network createNetwork() {
+        io.easystartup.cloud.hetzner.network.Network nw = new io.easystartup.cloud.hetzner.network.Network(hetznerClient);
         String networkName = mainSettings.getClusterName();
         String location = mainSettings.getMastersPool().getLocation();
         String privateNetworkSubnet = mainSettings.getPrivateNetworkSubnet();
 
-        Network network = hetznerClient.findNetwork(networkName);
+        Network network = nw.find(networkName);
         if (network != null) {
             System.out.println("Network " + networkName + " exists");
             return network;
         }
         System.out.println("Creating network");
-        Location hetznerLocation = hetznerClient.getLocation(location);
-        return hetznerClient.createNetwork(networkName, privateNetworkSubnet, hetznerLocation.getNetworkZone());
+        io.easystartup.cloud.hetzner.location.Location location1 = new io.easystartup.cloud.hetzner.location.Location(hetznerClient);
+        Location hetznerLocation = location1.getLocation(location);
+        return nw.create(networkName, privateNetworkSubnet, hetznerLocation.getNetworkZone());
     }
 
     private void waitForAllServersToComeUp(Map<ServerType, List<Server>> serverMap) {
