@@ -22,7 +22,7 @@ jobs:
       - name: Check for changes outside 'docs' directory
         id: check_changes
         run: |
-          if git diff --name-only --no-commit-id ${{ github.sha }} | grep -vE '^docs/' | grep -q '.'; then
+          if git diff-tree --name-only --no-commit-id ${{ github.sha }} | grep -vE '^docs' | grep -q '.'; then
             echo "changes_made=yes" >> "$GITHUB_ENV"
           else
             echo "changes_made=no" >> "$GITHUB_ENV"
