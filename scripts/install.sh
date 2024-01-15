@@ -13,7 +13,7 @@ JAVA_DIRECTORY=/usr/local/lib
 JAR_DIRECTORY=/usr/local/share
 SCRIPT_DIRECTORY=/usr/local/bin
 
-BASE_URL="https://download.oracle.com/java/21/archive/jdk-21.0.1"
+BASE_URL="https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12/OpenJDK21U-jre"
 # Initialize DOWNLOAD_URL variable
 DOWNLOAD_URL=""
 
@@ -21,35 +21,35 @@ DOWNLOAD_URL=""
 JAVA_DIR_LOCAL_BASE=$(pwd)/bundled-jre
 
 if [ "$OS" = "Linux" ] && [ "$ARCH" = "aarch64" ]; then
-    DOWNLOAD_URL="${BASE_URL}_linux-aarch64"
+    DOWNLOAD_URL="${BASE_URL}_aarch64_linux"
 elif [ "$OS" = "Linux" ] && [ ! "$ARCH" = "aarch64" ]; then
-    DOWNLOAD_URL="${BASE_URL}_linux-x64"
+    DOWNLOAD_URL="${BASE_URL}_x64_linux"
 elif [ "$OS" = "Darwin" ] && [ "$ARCH" = "arm64" ]; then
-    DOWNLOAD_URL="${BASE_URL}_macos-aarch64";
-    JAVA_DIR_LOCAL_BASE="${JAVA_DIR_LOCAL_BASE}/jdk-21.0.1.jdk/Contents/Home";
+    DOWNLOAD_URL="${BASE_URL}_aarch64_mac"
+    JAVA_DIR_LOCAL_BASE="${JAVA_DIR_LOCAL_BASE}/Contents/Home";
 elif [ "$OS" = "Darwin" ] && [ ! "$ARCH" = "arm64" ]; then
-    DOWNLOAD_URL="${BASE_URL}_macos-x64";
-    JAVA_DIR_LOCAL_BASE="${JAVA_DIR_LOCAL_BASE}/jdk-21.0.1.jdk/Contents/Home";
+    DOWNLOAD_URL="${BASE_URL}_x64_mac"
+    JAVA_DIR_LOCAL_BASE="${JAVA_DIR_LOCAL_BASE}/Contents/Home";
 else
     echo "Unsupported OS or Architecture"
     exit 1
 fi
 
-DOWNLOAD_URL="${DOWNLOAD_URL}_bin.tar.gz"
+DOWNLOAD_URL="${DOWNLOAD_URL}_hotspot_21.0.1_12.tar.gz"
 
 # Check if Java is already installed
 if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     echo "Java is already installed."
 else
-    echo "Downloading OpenJDK 21..."
-    wget -O openjdk-21.tar.gz $DOWNLOAD_URL
+    echo "Downloading Eclipse JRE 21..."
+    wget -O openjre-21.tar.gz $DOWNLOAD_URL
 
     mkdir -p bundled-jre
 
-    echo "Extracting OpenJDK 21..."
+    echo "Extracting Eclipse JRE 21..."
 
-    tar -xzf openjdk-21.tar.gz -C bundled-jre --strip-components=1
-    rm openjdk-21.tar.gz
+    tar -xzf openjre-21.tar.gz -C bundled-jre --strip-components=1
+    rm openjre-21.tar.gz
 fi
 
 mkdir -p $JAR_DIRECTORY

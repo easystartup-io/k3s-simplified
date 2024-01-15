@@ -5,7 +5,7 @@ JAR_FILE=/usr/local/share/k3s-simplified.jar
 
 # For macos its inside Contents/Home
 if [ "$OS" = "Darwin" ]; then
-    JAVA_DIRECTORY="${JAVA_DIRECTORY}/jdk-21.0.1.jdk/Contents/Home";
+    JAVA_DIRECTORY="${JAVA_DIRECTORY}/Contents/Home";
 fi
 # Run the JAR file with the newly downloaded or existing Java
 $JAVA_DIRECTORY/bin/java -jar "${JAR_FILE}" "$@"

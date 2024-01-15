@@ -43,7 +43,6 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             throw new CommandLine.ParameterException(spec.commandLine(), "Please enter a command like \"create\" or \"delete\" etc...\n");
-//            return null;
         }
 
         @Command(name = "releases", description = "# List the available k3s releases")

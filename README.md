@@ -1,24 +1,27 @@
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/easystartup-io/k3s-simplified)
-![GitHub Release Date](https://img.shields.io/github/release-date/easystartup-io/k3s-simplified)
-![GitHub last commit](https://img.shields.io/github/last-commit/easystartup-io/k3s-simplified)
-![GitHub issues](https://img.shields.io/github/issues-raw/easystartup-io/k3s-simplified)
-![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/easystartup-io/k3s-simplified)
-![GitHub](https://img.shields.io/github/license/easystartup-io/k3s-simplified)
-![GitHub Discussions](https://img.shields.io/github/discussions/easystartup-io/k3s-simplified)
-![GitHub top language](https://img.shields.io/github/languages/top/easystartup-io/k3s-simplified)
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+  <a href="https://github.com/easystartup-io/k3s-simplified">
+    <img src="https://github.com/easystartup-io/k3s-simplified/raw/main/docs/static/img/logo.png" alt="Logo" width="112" height="112">
 
-![GitHub forks](https://img.shields.io/github/forks/easystartup-io/k3s-simplified?style=social)
-![GitHub Repo stars](https://img.shields.io/github/stars/easystartup-io/k3s-simplified?style=social)
+  </a>
 
----
+<h2 align="center">k3s-simplified</h2>
 
-# Best simplified way to create a fully functional hetzner kubernetes cluster in production using CLI (command line interface)
-
-### Its a fully open source(MIT LICENSE) drop in replacement to hetzner-k3s written in java, which runs as a single binary, no extra dependency needed
+  <p align="center">
+    Best simplified way to create a fully functional kubernetes cluster in production on <a href="https://hetzner.com" target="_blank">Hetzner Cloud</a> using CLI (command line interface) 
+  </p>
+  <hr />
+</p>
 
 # Full Documentation
 
 Access comprehensive instructions at: **[https://k3s-simplified.easystartup.io](https://k3s-simplified.easystartup.io)**
+
+---
+
+Its a fully open source(MIT LICENSE) drop in replacement to hetzner-k3s written in java, which runs as a single binary, no extra dependency needed
+
 
 ## Project Background
 
@@ -32,11 +35,11 @@ Access comprehensive instructions at: **[https://k3s-simplified.easystartup.io](
 
 A command-line interface (CLI) for effortlessly creating and managing Kubernetes clusters in [Hetzner Cloud](https://www.hetzner.com/cloud). It utilizes [k3s](https://k3s.io/) by [Rancher](https://rancher.com/) for a lightweight Kubernetes experience.
 
+## License
+
+Distributed freely under the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt)
+
 ## Acknowledgments and shout out to
 
-1. [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s): The inspiration for this project and the basis for expanding my own cluster.
+1. [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s): was the starting point for this project. The inspiration for this project and the basis for expanding my own cluster.
 2. [hetznercloud-java](https://github.com/tomsiewert/hetznercloud-java): Essential for cloud API integration. Contributing back to this community project was enriching, especially with the rapid acceptance of my PRs addressing Hetzner API changes.
-
-## Licensing
-
-This tool is freely available under the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt).
