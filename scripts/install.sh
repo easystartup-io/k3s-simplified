@@ -87,4 +87,4 @@ if [ $num_items -eq 0 ]; then
 fi
 
 printf "\nInstallation completed successfully...\n"
-printf "\nTo get started just run 'k3s-simplified'"
+printf "\nTo get started just run 'k3s-simplified'\n\n"

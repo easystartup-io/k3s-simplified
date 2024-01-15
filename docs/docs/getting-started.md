@@ -19,11 +19,12 @@ title: Getting started
 
 1. **Binary Installation for macOS and Linux** (Apple Silicon/MacOS/LINUX M1/amd64/aarch64):
     ```bash
-    wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplifier.tar.gz
-    tar -xf k3s-simplifier.tar.gz
-    cd k3s-simplifier
+    wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
+    tar -xf k3s-simplified.tar.gz
+    cd k3s-simplified
     chmod +x install.sh
     sudo ./install.sh
+    cd ..
     ```
 
 2. **Windows Users**: Utilize the Linux binary under [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install).
