@@ -62,6 +62,7 @@ public class ConfigurationLoader {
     }
 
     private void validateCreateSettings(List<String> errors) {
+        validateClusterName(errors);
         validateKubeConfigPath(errors);
         validateK3sVersion(errors);
         validatePrivateSSHKey(errors);
@@ -74,6 +75,20 @@ public class ConfigurationLoader {
         Set<String> locations = location.getLocations();
         validateMastersPool(errors, serverTypes, locations);
         validateWorkersPool(errors, serverTypes, locations);
+    }
+
+    /**
+     * Hetzner gives error and it cant find servers if server names have upper case letters
+     * */
+    private void validateClusterName(List<String> errors) {
+        String clusterName = settings.getClusterName();
+        if (StringUtils.isBlank(clusterName)) {
+            errors.add("cluster_name is an blank. (only lowercase letters, digits and dashes are allowed)");
+        } else if (!Pattern.matches("^[a-z\\d-]+$", clusterName)) {
+            errors.add("cluster_name is an invalid format (only lowercase letters, digits and dashes are allowed)");
+        } else if (!Pattern.matches("^[a-z].*[a-z]$", clusterName)) {
+            errors.add("Ensure that cluster_name starts and ends with a normal letter");
+        }
     }
 
     private void validateMastersPool(List<String> errors, Set<String> serverTypes, Set<String> locations) {
@@ -194,7 +209,7 @@ public class ConfigurationLoader {
     }
 
     private boolean validPoolName(String name) {
-        Pattern pattern = Pattern.compile("\\A([A-Za-z0-9\\-_]+)\\Z");
+        Pattern pattern = Pattern.compile("^[A-Za-z0-9\\-_]+$");
         return pattern.matcher(name).matches();
     }
 

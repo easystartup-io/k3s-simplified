@@ -1,37 +1,8 @@
 ---
 sidebar_position: 2
-title: Getting started
 ---
 
-# Getting Started with k3s-simplified
-
-### Prerequisites
-
-- Hetzner Cloud account.
-- Hetzner Cloud Token with read/write permissions (You need to create a project from the cloud console, and then an API token with * both read and write permissions* (sidebar > Security > API Tokens); you will see the token only once, so be sure to take note of it somewhere safe).
-- kubectl installation.
-
-### Installation Guide
-
-
-
-#### Installation Steps
-
-1. **Binary Installation for macOS and Linux** (Apple Silicon/MacOS/LINUX M1/amd64/aarch64):
-    ```bash
-    wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
-    tar -xf k3s-simplified.tar.gz
-    cd k3s-simplified
-    chmod +x install.sh
-    sudo ./install.sh
-    cd ..
-    ```
-
-2. **Windows Users**: Utilize the Linux binary under [WSL (Windows Subsystem for Linux)](https://learn.microsoft.com/en-us/windows/wsl/install).
-
----
-
-## Creating Your Cluster
+# Creating your cluster
 
 k3s-simplified requires a YAML configuration file for cluster operations. Here's an example template (with optional settings commented):
 
@@ -120,6 +91,11 @@ worker_node_pools:
 
 For a detailed breakdown of each setting, please refer to the official repository documentation.
 
+:::warning
+cluster_name only supports lowercase alphabets, number and dashes. It's because of hetzner api limitations with capital letters.
+:::
+
+
 ### Creating the Cluster
 
 Execute the following command with your configuration file:
@@ -128,7 +104,7 @@ Execute the following command with your configuration file:
 k3s-simplified create --config cluster_config.yaml
 ```
 
-:::info Tip: Idempotent
+:::tip TIP: Idempotent
 This create command can be run any number of times with the same configuration without causing any issue, since this is idempotent. 
 This means that if for some reason the create process gets stuck or throws errors (for example if the Hetzner API is unavailable or there are timeouts etc), you can just stop the current command, and re-run it with the same configuration to continue from where it left.
 :::
@@ -140,11 +116,3 @@ This means that if for some reason the create process gets stuck or throws error
 - **Scaling Down**: Decrease the instance count and delete the nodes from both Kubernetes and Hetzner Cloud.
 - **Upgrading k3s Version**: Use the `k3s-simplified upgrade` command with the new version number.
 - **Deleting a Cluster**: Run `k3s-simplified delete --config cluster_config.yaml`.
-
----
-
-## Troubleshooting and Support
-
-Encounter issues? Check the SSH key setup or use the SSH agent. For more complex problems, the GitHub discussions and issues sections are great resources.
-
-Explore k3s-simplified for an efficient, secure, and manageable Kubernetes deployment in Hetzner Cloud! 🚀

@@ -2,11 +2,8 @@
 title: Troubleshooting
 sidebar_position: 80
 ---
+### Persistent Tool Hang-Ups: Potential Solutions
 
-### Tool hanging forever
-If the tool hangs forever after creating servers and you see timeouts, this may be caused by problems with your SSH key,
-for example if you use a key with a passphrase or an older key (due to the deprecation of some crypto stuff in newwer
-operating systems). In this case you may want to try setting `use_ssh_agent` to `true` to use the SSH agent. 
+Experiencing endless hang-ups after server creation, accompanied by timeouts? This could stem from SSH key issues. Common culprits include passphrase-protected keys or outdated keys (especially given recent crypto deprecations in newer operating systems). A potential fix is setting `use_ssh_agent` to `true` enabling SSH agent usage.
 
-If you are not familiar with what an SSH agent is, take a look at [this page](https://smallstep.com/blog/ssh-agent-explained/) for
-an explanation.
+Unfamiliar with SSH agents? Gain a clearer understanding by exploring [this comprehensive guide](https://smallstep.com/blog/ssh-agent-explained/) on SSH agent basics.

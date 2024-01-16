@@ -2,6 +2,7 @@ package io.easystartup;
 
 
 import io.easystartup.configuration.ConfigurationLoader;
+import io.easystartup.utils.Releases;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.simple.SimpleLogger;
 import picocli.CommandLine;
@@ -47,7 +48,8 @@ public class Main {
 
         @Command(name = "releases", description = "# List the available k3s releases")
         public void listReleases() {
-            System.out.println("Not yet implemented");
+            Releases releases = new Releases();
+            releases.listAll();
         }
 
         @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")
