@@ -9,6 +9,7 @@ import picocli.CommandLine;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -48,8 +49,10 @@ public class Main {
 
         @Command(name = "releases", description = "# List the available k3s releases")
         public void listReleases() {
-            Releases releases = new Releases();
-            releases.listAll();
+            List<String> releaseName = new Releases().availableReleases();
+            for (String release : releaseName) {
+                System.out.println(release);
+            }
         }
 
         @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.cloud.hetzner.location.Location;
 import io.easystartup.cloud.hetzner.network.Network;
+import io.easystartup.utils.Releases;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.util.SubnetUtils;
 
@@ -75,6 +76,10 @@ public class ConfigurationLoader {
         Set<String> locations = location.getLocations();
         validateMastersPool(errors, serverTypes, locations);
         validateWorkersPool(errors, serverTypes, locations);
+    }
+
+    private void validateRelease(List<String> errors) {
+
     }
 
     /**
@@ -309,6 +314,12 @@ public class ConfigurationLoader {
         if (isBlank(settings.getK3SVersion())) {
             errors.add("k3s_version cannot be blank");
             return;
+        }
+
+        List<String> availableReleases = new Releases().availableReleases();
+        String k3SVersion = settings.getK3SVersion();
+        if (!availableReleases.contains(k3SVersion)){
+            errors.add("K3s version is not valid, run `k3s-simplified releases` to see available versions");
         }
     }
 

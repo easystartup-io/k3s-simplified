@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +29,7 @@ public class Releases {
     private static final String GITHUB_DELIM_LINKS = ",";
     private static final Pattern GITHUB_LINK_REGEX = Pattern.compile("<(?<link>[^>]+)>; rel=\"(?<rel>[^\"]+)\"");
 
-    public static List<String> availableReleases() {
+    public List<String> availableReleases() {
         try {
             String RELEASES_FILENAME = getReleaseFileName(new Date());
             File file = new File(RELEASES_FILENAME);
@@ -34,6 +37,8 @@ public class Releases {
                 Yaml yaml = new Yaml();
                 return yaml.load(new FileInputStream(file));
             }
+
+            Thread.startVirtualThread(() -> deleteExistingFilesExceptLatest(RELEASES_FILENAME));
 
             List<String> releases = fetchAllReleasesFromGithub();
             Yaml yaml = new Yaml();
@@ -44,7 +49,7 @@ public class Releases {
         }
     }
 
-    private static List<String> fetchAllReleasesFromGithub() throws IOException {
+    private List<String> fetchAllReleasesFromGithub() throws IOException {
         List<String> releases = new ArrayList<>();
         String nextPageUrl = "https://api.github.com/repos/k3s-io/k3s/tags?per_page=100";
 
@@ -83,7 +88,7 @@ public class Releases {
         }
     }
 
-    private static String extractNextGithubPageUrl(String linkHeader) {
+    private String extractNextGithubPageUrl(String linkHeader) {
         if (linkHeader == null || linkHeader.isEmpty()) {
             return null;
         }
@@ -102,7 +107,7 @@ public class Releases {
         return null;
     }
 
-    private static List<String> getReleaseNames(HttpURLConnection conn, List<String> releases) throws IOException {
+    private List<String> getReleaseNames(HttpURLConnection conn, List<String> releases) throws IOException {
         List<String> releaseNames = new ArrayList<>();
         String response = IOUtils.toString(conn.getInputStream(), StandardCharsets.UTF_8);
         TypeReference<List<GithubTagsResponse>> listTypeReference = new TypeReference<>() {
@@ -114,17 +119,32 @@ public class Releases {
         return releaseNames;
     }
 
-
-    public void listAll() {
-        List<String> strings = availableReleases();
-        strings.forEach(val -> {
-            System.out.println(val);
-        });
-    }
-
-    private static String getReleaseFileName(Date date) {
+    private String getReleaseFileName(Date date) {
         SimpleDateFormat mmDd = new SimpleDateFormat("yyyy_MM_dd");
         String format = mmDd.format(date);
         return "/tmp/k3s-simplified-releases_" + format + ".yaml";
+    }
+
+    private void deleteExistingFilesExceptLatest(String RELEASES_FILENAME) {
+        try {
+            String directoryPath = "/tmp";
+            String regexPattern = "k3s-simplified-releases_.*.yaml";
+            File directory = new File(directoryPath);
+            File[] files = directory.listFiles();
+            if (files == null) {
+                return;
+            }
+            Pattern pattern = Pattern.compile(regexPattern);
+            for (File file : files) {
+                if (file.getName().equalsIgnoreCase(RELEASES_FILENAME)) {
+                    continue;
+                }
+                if (!pattern.matcher(file.getName()).matches()) {
+                    continue;
+                }
+                file.delete();
+            }
+        } catch (Throwable ignored) {
+        }
     }
 }
