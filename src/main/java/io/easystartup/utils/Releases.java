@@ -40,6 +40,8 @@ public class Releases {
 
             Thread.startVirtualThread(() -> deleteExistingFilesExceptLatest(RELEASES_FILENAME));
 
+            System.out.println("\nFetching latest k3s releases from the internet ...\n");
+
             List<String> releases = fetchAllReleasesFromGithub();
             Yaml yaml = new Yaml();
             yaml.dump(releases, new FileWriter(RELEASES_FILENAME));
