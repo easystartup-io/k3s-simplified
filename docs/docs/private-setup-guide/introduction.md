@@ -6,12 +6,12 @@ sidebar_position: 1
 
 Securing your cluster from external threats such as excessive pings or hackers is crucial. Our primary objective is to isolate the cluster from the public network as much as possible, enhancing its security.
 
-## Prerequisites for Isolation
+## Steps needed for Isolation
 To achieve this, we need to set up:
 
-1. **Private API Load Balancer:** Manages internal traffic.
+1. **Access/Jump Box Server:** Sits within the private network for executing commands.
 2. **NAT Gateway with a Public IP:** Provides internet access and enables downloading of k3s for worker and master nodes.
-3. **Access/Jump Box Server:** Sits within the private network for executing commands.
+3. **Private API Load Balancer:** Manages internal traffic.
 4. **Disable Public Networking on Node IPs:** Ensures node accessibility only through the access box.
 5. **Post-Install Routing Command:** Routes outbound access of worker and master nodes through the NAT gateway.
 

@@ -1,5 +1,6 @@
 package io.easystartup.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -8,6 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class NodePool {
+
+    public enum Architecture {
+        x86,
+        arm64
+    }
 
     public NodePool() {
     }
@@ -38,6 +44,9 @@ public class NodePool {
 
     @JsonProperty("additional_packages")
     private String[] additionalPackages;
+
+    @JsonIgnore
+    private transient Architecture architecture;
 
     private AutoScaling autoScaling;
 
@@ -119,5 +128,13 @@ public class NodePool {
 
     public void setAutoScaling(AutoScaling autoScaling) {
         this.autoScaling = autoScaling;
+    }
+
+    public Architecture getArchitecture() {
+        return architecture;
+    }
+
+    public void setArchitecture(Architecture architecture) {
+        this.architecture = architecture;
     }
 }

@@ -16,6 +16,7 @@ public class TemplateUtil {
     public static final String WORKER_INSTALL_SCRIPT = "templates/worker_install_script.sh";
     public static final String HETZNER_CLOUD_SECRET_MANIFEST = "templates/hetzner_cloud_secret_manifest.yaml";
     public static final String CLUSTER_AUTOSCALER_MANIFEST = "templates/cluster_autoscaler.yaml";
+    public static final String CLUSTER_AUTOSCALER_MANIFEST_V2 = "templates/cluster_autoscaler_v2.yaml";
 
     public static String getTemplateFile(String file){
         InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);

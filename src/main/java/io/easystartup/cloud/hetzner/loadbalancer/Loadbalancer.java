@@ -27,8 +27,8 @@ public class Loadbalancer {
     }
 
     public LoadBalancer find(String loadBalancerName) {
-        LoadBalancersResponse loadBalancers = hetznerCloudAPI.getLoadBalancers();
-        Optional<LoadBalancer> first = loadBalancers.getLoadBalancers().stream().filter(loadBalancer -> loadBalancer.getName().equals(loadBalancerName)).findFirst();
+        LoadBalancersResponse loadBalancers = hetznerCloudAPI.getLoadBalancerByName(loadBalancerName);
+        Optional<LoadBalancer> first = loadBalancers.getLoadBalancers().stream().findFirst();
         return first.orElse(null);
     }
 

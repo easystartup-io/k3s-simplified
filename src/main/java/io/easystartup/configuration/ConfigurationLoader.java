@@ -10,6 +10,8 @@ import io.easystartup.cloud.hetzner.HetznerClient;
 import io.easystartup.cloud.hetzner.location.Location;
 import io.easystartup.cloud.hetzner.network.Network;
 import io.easystartup.utils.Releases;
+import me.tomsdevsn.hetznercloud.objects.enums.Architecture;
+import me.tomsdevsn.hetznercloud.objects.general.ServerType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.util.SubnetUtils;
 
@@ -21,19 +23,19 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 
 public class ConfigurationLoader {
     private HetznerClient hetznerClient;
-    private List<String> errors = new ArrayList<>();
-    private MainSettings settings; // Assuming MainSettings is a class that represents your configuration
+    private final List<String> errors = new ArrayList<>();
+    private final Set<String> serverTypes;
+    private final MainSettings settings; // Assuming MainSettings is a class that represents your configuration
 
     // Constructor
     public ConfigurationLoader(String configurationFilePath) {
@@ -54,8 +56,34 @@ public class ConfigurationLoader {
 
         replaceTildeWithUserHomeDirectory(settings);
 
+        Map<String, ServerType> fullServerTypes = hetznerClient.getServerTypes().stream().collect(Collectors.toMap(ServerType::getName, Function.identity()));
+        serverTypes = fullServerTypes.keySet();
+
+        populateArchitecturesInWorkerNodePools(fullServerTypes);
+
         validateHetznerToken(errors);
         this.hetznerClient = new HetznerClient(settings.getHetznerToken());
+    }
+
+    private void populateArchitecturesInWorkerNodePools(Map<String, ServerType> fullServerTypes) {
+        NodePool[] workerNodePools = settings.getWorkerNodePools();
+        if (workerNodePools == null || workerNodePools.length == 0) {
+            return;
+        }
+        for (NodePool workerNodePool : workerNodePools) {
+            String instanceType = workerNodePool.getInstanceType();
+            ServerType serverType = fullServerTypes.get(instanceType);
+            if (serverType == null || serverType.getArchitecture() == null) {
+                continue;
+            }
+            NodePool.Architecture architecture = null;
+            if (serverType.getArchitecture() == Architecture.arm) {
+                architecture = NodePool.Architecture.arm64;
+            } else if (serverType.getArchitecture() == Architecture.x86) {
+                architecture = NodePool.Architecture.x86;
+            }
+            workerNodePool.setArchitecture(architecture);
+        }
     }
 
     public void validate() {
@@ -71,11 +99,10 @@ public class ConfigurationLoader {
         validateExistingNetworkName(errors);
         validateNetwork(errors, settings.getSSHAllowedNetworks(), "SSH");
         validateNetwork(errors, settings.getAPIAllowedNetworks(), "API");
-        Set<String> serverTypes = hetznerClient.getServerTypes();
         Location location = new Location(hetznerClient);
         Set<String> locations = location.getLocations();
-        validateMastersPool(errors, serverTypes, locations);
-        validateWorkersPool(errors, serverTypes, locations);
+        validateMastersPool(errors, locations);
+        validateWorkersPool(errors, locations);
     }
 
     private void validateRelease(List<String> errors) {
@@ -96,24 +123,24 @@ public class ConfigurationLoader {
         }
     }
 
-    private void validateMastersPool(List<String> errors, Set<String> serverTypes, Set<String> locations) {
-        validateNode(errors, serverTypes, locations, settings.getMastersPool());
+    private void validateMastersPool(List<String> errors, Set<String> locations) {
+        validateNode(errors, locations, settings.getMastersPool());
         validateMasterInstanceCount(errors, settings.getMastersPool());
     }
 
-    private void validateWorkersPool(List<String> errors, Set<String> serverTypes, Set<String> locations) {
+    private void validateWorkersPool(List<String> errors, Set<String> locations) {
         if (settings.getScheduleWorkloadsOnMasters()) {
             return;
         }
         validatePoolName(errors, settings.getWorkerNodePools());
         validateUniqueWorkNames(errors, settings.getWorkerNodePools());
         for (NodePool workerNodePool : settings.getWorkerNodePools()) {
-            validateNode(errors, serverTypes, locations, workerNodePool);
+            validateNode(errors, locations, workerNodePool);
         }
     }
 
-    private void validateNode(List<String> errors, Set<String> serverTypes, Set<String> locations, NodePool nodePool) {
-        validateInstanceType(errors, serverTypes, nodePool);
+    private void validateNode(List<String> errors, Set<String> locations, NodePool nodePool) {
+        validateInstanceType(errors, nodePool);
         validateLocation(errors, locations, nodePool);
         validateLabels(errors, nodePool);
         validateTaints(errors, nodePool);
@@ -176,14 +203,14 @@ public class ConfigurationLoader {
         }
     }
 
-    private static void validateInstanceType(List<String> errors, Set<String> serverTypes, NodePool nodePool) {
+    private void validateInstanceType(List<String> errors, NodePool nodePool) {
         boolean contains = serverTypes.contains(nodePool.getInstanceType());
         if (!contains) {
             errors.add(getPoolNameOrMaster(nodePool) + " node pool has an invalid instance type");
         }
     }
 
-    private static String getPoolNameOrMaster(NodePool nodePool) {
+    private String getPoolNameOrMaster(NodePool nodePool) {
         return isBlank(nodePool.getName()) ? "master" : nodePool.getName();
     }
 
@@ -366,7 +393,7 @@ public class ConfigurationLoader {
         }
     }
 
-    public static boolean isOdd(long number) {
+    public boolean isOdd(long number) {
         return number % 2 != 0;
     }
 

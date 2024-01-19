@@ -33,9 +33,10 @@ public class HetznerClient {
         return hetznerCloudAPI;
     }
 
-    public Set<String> getServerTypes() {
+    public List<ServerType> getServerTypes() {
+        // todo: replace with paginated fetch all server types in upstream package
         ServerTypesResponse serverTypes = hetznerCloudAPI.getServerTypes();
-        return serverTypes.getServerTypes().stream().map(ServerType::getName).collect(Collectors.toSet());
+        return serverTypes.getServerTypes();
     }
 
     public Server findServer(String serverName) {
@@ -89,7 +90,6 @@ public class HetznerClient {
     }
 
     private Server waitForServerCreation(String serverName) {
-        // Todo: wait for server to start up also
         long tic = System.currentTimeMillis();
         while (true) {
             Server server = findServer(serverName);

@@ -31,6 +31,9 @@ public class CreateCluster {
         WORKER
     }
 
+    /**
+     * <a href="https://docs.hetzner.com/cloud/placement-groups/overview#limits">...</a>
+     */
     private static final int MAX_INSTANCES_PER_PLACEMENT_GROUP = 10;
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
@@ -115,6 +118,10 @@ public class CreateCluster {
         initializeWorkerNodes(serverList.get(ServerType.WORKER));
     }
 
+    /**
+     * Create worker nodes which don't need autoscaling.
+     * Autoscaling nodes will be created using kubernetes hetzner autoscaler
+     */
     private void initializeWorkerNodes(List<Server> serverList) {
         NodePool[] workerNodePools = mainSettings.getWorkerNodePools();
 

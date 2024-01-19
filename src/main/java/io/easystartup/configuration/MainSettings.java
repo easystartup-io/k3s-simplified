@@ -8,6 +8,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MainSettings {
+
+    public enum AutoScalerVersion {
+        v1,
+        v2,
+    }
     public MainSettings() {
     }
 
@@ -41,8 +46,19 @@ public class MainSettings {
     @JsonProperty("image")
     private String image ="ubuntu-22.04";
 
+    // Deprecated, only for use with v1
     @JsonProperty("autoscaling_image")
+    @Deprecated
     private String autoScalingImage;
+
+    @JsonProperty("autoscaling_image_arm64")
+    private String autoScalingImageArm64;
+
+    @JsonProperty("autoscaling_image_x86")
+    private String autoScalingImageX86;
+
+    @JsonProperty("autoscalerVersion")
+    private AutoScalerVersion autoscalerVersion = AutoScalerVersion.v2;
 
     @JsonProperty("additional_packages")
     private String[] additionalPackages;
@@ -483,6 +499,7 @@ public class MainSettings {
         this.kubeProxyArgs = kubeProxyArgs;
     }
 
+    @Deprecated
     public String getAutoScalingImage() {
         return autoScalingImage;
     }
@@ -491,11 +508,35 @@ public class MainSettings {
         this.autoScalingImage = autoScalingImage;
     }
 
+    public String getAutoScalingImageArm64() {
+        return autoScalingImageArm64;
+    }
+
+    public void setAutoScalingImageArm64(String autoScalingImageArm64) {
+        this.autoScalingImageArm64 = autoScalingImageArm64;
+    }
+
+    public String getAutoScalingImageX86() {
+        return autoScalingImageX86;
+    }
+
+    public void setAutoScalingImageX86(String autoScalingImageX86) {
+        this.autoScalingImageX86 = autoScalingImageX86;
+    }
+
     public boolean isDebug() {
         return debug;
     }
 
     public void setDebug(boolean debug) {
         this.debug = debug;
+    }
+
+    public AutoScalerVersion getAutoscalerVersion() {
+        return autoscalerVersion;
+    }
+
+    public void setAutoscalerVersion(AutoScalerVersion autoscalerVersion) {
+        this.autoscalerVersion = autoscalerVersion;
     }
 }

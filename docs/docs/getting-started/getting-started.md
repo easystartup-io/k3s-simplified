@@ -31,8 +31,13 @@ schedule_workloads_on_masters: false
 # enable_public_net_ipv6: false # default is true
 # private_api_load_balancer: true # default is false, if you want to use a private api load balancer, ensure that its accessible from where you are running executing this config 
 # api_server_hostname: testcluster.example.com # DNS for the k8s API LoadBalancer. Only enable after you have run the create command at least once and done the dns mapping to the private ip or public ip of the load balancer . Else the kubectl command will dns timeout
+
 # image: rocky-9 # optional: default is ubuntu-22.04
-# autoscaling_image: 103908130 # optional, defaults to the `image` setting
+
+# autoscaling_image: #deprecated, instead use the below two options # 103908130 # defaults to the `image` setting
+
+# autoscaling_image_x86: #Image to be used for x86 instance autoscaling
+# autoscaling_image_arm64: #Image to be used for arm instance autoscaling
 # snapshot_os: microos # otional: specified the os type when using a custom snapshot
 cloud_controller_manager_manifest_url: "https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.19.0/ccm-networks.yaml"
 csi_driver_manifest_url: "https://raw.githubusercontent.com/hetznercloud/csi-driver/v2.6.0/deploy/kubernetes/hcloud-csi.yml"

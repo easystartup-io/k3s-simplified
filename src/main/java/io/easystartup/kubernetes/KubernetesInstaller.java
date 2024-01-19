@@ -1,11 +1,16 @@
 package io.easystartup.kubernetes;
 
-import io.easystartup.cluster.CreateCluster;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.easystartup.cloud.hetzner.HetznerClient;
+import io.easystartup.cluster.CreateCluster;
 import io.easystartup.configuration.AutoScaling;
 import io.easystartup.configuration.KeyValuePair;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
+import io.easystartup.kubernetes.autoscaling.AutoScalingImagesForArch;
+import io.easystartup.kubernetes.autoscaling.AutoscalingClusterConfig;
+import io.easystartup.kubernetes.autoscaling.NodeAutoscalingConfig;
 import io.easystartup.utils.*;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -333,6 +338,10 @@ public class KubernetesInstaller {
             return;
         }
 
+        deployClusterAutoscaler(k3sToken, autoScalingWorkerNodePools, firstMaster);
+    }
+
+    private void deployClusterAutoscaler(String k3sToken, Set<NodePool> autoScalingWorkerNodePools, Server firstMaster) {
         String nodePoolArgs = autoScalingWorkerNodePools.stream()
                 .map(pool -> {
                     AutoScaling autoScaling = pool.getAutoScaling();
@@ -342,10 +351,11 @@ public class KubernetesInstaller {
                 })
                 .collect(Collectors.joining("\n            "));
 
+
         String k3sJoinScript = "|\\n    " + workerInstallScript(k3sToken).replace("\n", "\\n    ");
 
         // Assuming cloudInit method is implemented to create cloud-init for Hetzner Server
-        String cloudInit = cloudInit(
+        String cloudInitV1 = cloudInit(
                 mainSettings.getSshPort(),
                 mainSettings.getSnapshotOs(),
                 getAdditionalPackages(),
@@ -353,17 +363,40 @@ public class KubernetesInstaller {
                 List.of(k3sJoinScript),
                 debug);
 
+        AutoscalingClusterConfig autoscalingClusterConfig = createAutoscalingClusterConfig(autoScalingWorkerNodePools, k3sJoinScript);
+
+        byte[] autoScalingClusterConfigBytes = null;
+        try {
+            autoScalingClusterConfigBytes = new ObjectMapper().writeValueAsBytes(autoscalingClusterConfig);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+
         String certificatePath = checkCertificatePath(firstMaster);
         Map<String, Object> dataModel = new HashMap<>();
         dataModel.put("node_pool_args", nodePoolArgs);
-        dataModel.put("cloud_init", Base64.getEncoder().encodeToString(cloudInit.getBytes()));
-        dataModel.put("image", isBlank(mainSettings.getAutoScalingImage()) ? mainSettings.getImage() : mainSettings.getAutoScalingImage());
+
+        if (mainSettings.getAutoscalerVersion() == MainSettings.AutoScalerVersion.v2) {
+            dataModel.put("cloud_cluster_config", Base64.getEncoder().encodeToString(autoScalingClusterConfigBytes));
+        } else if (mainSettings.getAutoscalerVersion() == MainSettings.AutoScalerVersion.v1) {
+            dataModel.put("cloud_init", Base64.getEncoder().encodeToString(cloudInitV1.getBytes()));
+            dataModel.put("image", isBlank(mainSettings.getAutoScalingImage()) ? mainSettings.getImage() : mainSettings.getAutoScalingImage());
+        }
+
         dataModel.put("firewall_name", mainSettings.getClusterName());
         dataModel.put("ssh_key_name", mainSettings.getClusterName());
         dataModel.put("network_name", mainSettings.getClusterName());
+        dataModel.put("enable_public_net_ipv4", String.valueOf(mainSettings.isEnablePublicNetIpv4()));
+        dataModel.put("enable_public_net_ipv6", String.valueOf(mainSettings.isEnablePublicNetIpv6()));
         dataModel.put("certificate_path", certificatePath);
 
-        String clusterAutoscalerManifest = TemplateUtil.renderTemplate(TemplateUtil.CLUSTER_AUTOSCALER_MANIFEST, dataModel);
+        String clusterAutoscalerManifest = null;
+        if (mainSettings.getAutoscalerVersion() == MainSettings.AutoScalerVersion.v2) {
+            clusterAutoscalerManifest = TemplateUtil.renderTemplate(TemplateUtil.CLUSTER_AUTOSCALER_MANIFEST_V2, dataModel);
+        } else if (mainSettings.getAutoscalerVersion() == MainSettings.AutoScalerVersion.v1) {
+            clusterAutoscalerManifest = TemplateUtil.renderTemplate(TemplateUtil.CLUSTER_AUTOSCALER_MANIFEST, dataModel);
+        }
 
         String clusterAutoscalerManifestPath = "/tmp/cluster_autoscaler_manifest.yaml";
         try {
@@ -384,6 +417,81 @@ public class KubernetesInstaller {
         System.out.println("...Cluster Autoscaler deployed.");
     }
 
+    private AutoscalingClusterConfig createAutoscalingClusterConfig(Set<NodePool> autoScalingWorkerNodePools, String k3sJoinScript) {
+        AutoscalingClusterConfig autoscalingClusterConfig = new AutoscalingClusterConfig();
+
+        Map<String, NodeAutoscalingConfig> nodeConfigs = new HashMap<>();
+
+        String arm64Image = mainSettings.getAutoScalingImage() != null ? mainSettings.getAutoScalingImage() : mainSettings.getImage();
+        String x86Image = arm64Image;
+
+        for (NodePool nodePool : autoScalingWorkerNodePools) {
+            NodeAutoscalingConfig nodeAutoscalingConfig = new NodeAutoscalingConfig();
+
+            if (nodePool.getImage() != null) {
+                if (nodePool.getArchitecture() == NodePool.Architecture.arm64) {
+                    arm64Image = nodePool.getImage();
+                } else if (nodePool.getArchitecture() == NodePool.Architecture.x86) {
+                    x86Image = nodePool.getImage();
+                }
+            }
+
+            String cloudInit = cloudInit(
+                    mainSettings.getSshPort(),
+                    mainSettings.getSnapshotOs(),
+                    getAdditionalPackages(nodePool),
+                    getAdditionalPostCreateCommands(nodePool),
+                    List.of(k3sJoinScript),
+                    debug);
+
+            nodeAutoscalingConfig.setCloudInit(cloudInit);
+
+            KeyValuePair[] labels = nodePool.getLabels();
+            if (labels != null) {
+                Map<String, String> mapLabels = Arrays.stream(labels).collect(Collectors.toMap(KeyValuePair::getKey, KeyValuePair::getValue));
+                nodeAutoscalingConfig.setLabels(mapLabels);
+            }
+
+            KeyValuePair[] taints = nodePool.getTaints();
+            if (taints != null) {
+                List<NodeAutoscalingConfig.Taint> taintList = new ArrayList<>();
+                Arrays.stream(taints).forEach(taint -> {
+                    NodeAutoscalingConfig.Taint taint1 = new NodeAutoscalingConfig.Taint();
+                    taint1.setKey(taint1.getKey());
+                    String value = taint1.getValue();
+                    String[] split = value.split(":");
+                    if (split.length == 2) {
+                        taint1.setValue(split[0]);
+                        taint1.setEffect(split[1]);
+                    } else if (split.length == 1) {
+                        taint1.setValue(taint1.getValue());
+                    }
+                });
+                nodeAutoscalingConfig.setTaints(taintList);
+            }
+
+            nodeConfigs.put(nodePool.getName(), nodeAutoscalingConfig);
+        }
+
+
+        AutoScalingImagesForArch autoScalingImagesForArch = new AutoScalingImagesForArch();
+
+        String x86 = mainSettings.getAutoScalingImageX86() != null ? mainSettings.getAutoScalingImageX86() : x86Image;
+        String arm64 = mainSettings.getAutoScalingImageArm64() != null ? mainSettings.getAutoScalingImageArm64() : arm64Image;
+
+        autoScalingImagesForArch.setAmd64(x86);
+        autoScalingImagesForArch.setArm64(arm64);
+
+        ConsoleColors.println("Computed Autoscaling image for x86: " + x86, ConsoleColors.PURPLE_BOLD_BRIGHT);
+        ConsoleColors.println("Computed Autoscaling image for arm64: " + arm64, ConsoleColors.PURPLE_BOLD_BRIGHT);
+
+        autoscalingClusterConfig.setImagesForArch(autoScalingImagesForArch);
+
+
+        autoscalingClusterConfig.setNodeConfigs(nodeConfigs);
+        return autoscalingClusterConfig;
+    }
+
     private List<String> getAdditionalPostCreateCommands() {
         if (mainSettings.getPostCreateCommands() == null || mainSettings.getPostCreateCommands().length == 0) {
             return List.of();
@@ -391,7 +499,27 @@ public class KubernetesInstaller {
         return Arrays.stream(mainSettings.getPostCreateCommands()).toList();
     }
 
+    private List<String> getAdditionalPostCreateCommands(NodePool nodePool) {
+        if (nodePool.getPostCreateCommands() != null && nodePool.getPostCreateCommands().length != 0) {
+            return Arrays.stream(nodePool.getPostCreateCommands()).toList();
+        }
+        if (mainSettings.getPostCreateCommands() == null || mainSettings.getPostCreateCommands().length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(mainSettings.getPostCreateCommands()).toList();
+    }
+
     private List<String> getAdditionalPackages() {
+        if (mainSettings.getAdditionalPackages() == null || mainSettings.getAdditionalPackages().length == 0) {
+            return List.of();
+        }
+        return Arrays.stream(mainSettings.getAdditionalPackages()).toList();
+    }
+
+    private List<String> getAdditionalPackages(NodePool nodePool) {
+        if (nodePool.getAdditionalPackages() != null && mainSettings.getAdditionalPackages().length != 0) {
+            return Arrays.stream(nodePool.getAdditionalPackages()).toList();
+        }
         if (mainSettings.getAdditionalPackages() == null || mainSettings.getAdditionalPackages().length == 0) {
             return List.of();
         }
