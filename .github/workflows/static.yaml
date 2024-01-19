@@ -49,6 +49,10 @@ jobs:
       - name: Install dependencies
         if: ${{env.changes_made == 'yes'}}
         working-directory: docs
+        run: npm install
+      - name: Install dependencies
+        if: ${{env.changes_made == 'yes'}}
+        working-directory: docs
         run: npm ci
       - name: Build website
         if: ${{env.changes_made == 'yes'}}
