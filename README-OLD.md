@@ -1,15 +1,3 @@
-# Best simplified way to create a fully functional hetzner kubernetes cluster in production 
-
-### Its a fully open source drop in replacement to hetzner-k3s written in java, which runs as a single native binary, no extra dependency needed
-
-### Full Disclaimer
-
-1. This started as a fork to hetzner-k3s https://github.com/vitobotta/hetzner-k3s
-2. Have ported this to java because I am comfortable in this language and its cross platform
-3. Since I am using it in production, I need to be able to maintain it actively
-4. And I am planning to give full support (you can contact me if you want paid support and consultancy)
-5. Also I have put it in active development mode. And more emphasis on private isolated cluster because that is how it is required in production, can't have my api load balancer exposed publically for everyone in the world to ping
-
 ## What is this?
 
 This is a CLI tool to quickly create and manage Kubernetes clusters in [Hetzner Cloud](https://www.hetzner.com/cloud)
@@ -38,44 +26,6 @@ takes **2-3 minutes** only. This includes
 Also see
 this [wiki page](https://github.com/easystartup-io/k3s-simplified/blob/main/wiki/Setting%20up%20a%20cluster.md) for a
 tutorial on how to set up a cluster with the most common setup to get you started.
-
-___
-
-## Prerequisites
-
-All that is needed to use this tool is
-
-- an Hetzner Cloud account
-
-- an Hetzner Cloud token: for this you need to create a project from the cloud console, and then an API token with *
-  *both read and write permissions** (sidebar > Security > API Tokens); you will see the token only once, so be sure to
-  take note of it somewhere safe
-
-- kubectl installed
-
-___
-
-## Installation
-
-Before using the tool, be sure to have kubectl installed as it's required to install some components in the cluster and
-perform k3s upgrades.
-
-
-#### Binary installation (single instructions for all mac and linux architectures)
-
-##### Apple Silicon/MacOS/LINUX M1/amd64/aarch64
-
-```bash
-wget https://github.com/easystartup-io/k3s-simplified/releases/latest/download/k3s-simplified.tar.gz
-tar -xf k3s-simplified.tar.gz
-cd k3s-simplified
-chmod +x install.sh
-sudo ./install.sh
-cd ..
-```
-### Windows
-
-Use the Linux binary under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
 
 ___
 
@@ -483,19 +433,3 @@ sets the IP-Address of the coredns service.
 
 The networks you provide should provide enough space for the expected amount of pods/services. By default `/16` networks
 are used. Please make sure you chose an adequate size, as changing the CIDR afterwards is not supported.
-
-
-
-___
-___
-
-## Huge shout out to
-
-1. [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s) : Serving as an inspiration to start this project and expand my current cluster which I created using that tool. 
-2. [hetznercloud-java](https://github.com/tomsiewert/hetznercloud-java) : Didn't have to do any extra development for the cloud apis, planned on using existing library so that I could contribute back to the community for any discoveries I made, had to raise a couple of PRs to fix some hetzner api changes, best part was it got merged within a few hours and new releases published in the pipeline. 
-___
-
-## License
-
-This tool is available as open source under the terms of
-the [MIT License](https://github.com/easystartup-io/k3s-simplified/blob/main/LICENSE.txt).
