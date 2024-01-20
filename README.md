@@ -28,7 +28,7 @@ Its a fully open source(MIT LICENSE) drop in replacement to hetzner-k3s written 
 1. This project originated as a fork of [hetzner-k3s](https://github.com/vitobotta/hetzner-k3s).
 2. Rewritten in Java for cross-platform compatibility and my familiarity with the language.
 3. Actively maintained for production use.
-4. I offer full support, including paid consultancy (contact details available [here](https://k3s-simplified.easystartup.io/contact-me)).
+4. I offer full support, including paid consultancy (contact details available [here](https://k3s-simplified.easystartup.io/docs/contact-me)).
 5. Emphasis on developing a private, isolated cluster setup, crucial for production environments to safeguard against unauthorized external access.
 
 ## About the Tool
