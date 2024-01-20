@@ -16,7 +16,7 @@
 
 # Full Documentation
 
-Access comprehensive instructions at: **[https://k3s-simplified.easystartup.io](https://k3s-simplified.easystartup.io)**
+Access comprehensive instructions at: **[https://k3s-simplified.easystartup.io/docs/](https://k3s-simplified.easystartup.io)**
 
 ---
 
