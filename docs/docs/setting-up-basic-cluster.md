@@ -12,7 +12,7 @@ We'll begin with a [hello-world](https://gist.githubusercontent.com/easystartup-
 
 1. Download `kubectl`: [Installation Guide](https://kubernetes.io/docs/tasks/tools/#kubectl).
 2. Download `Helm`: [Installation Guide](https://helm.sh/docs/intro/install/).
-3. Download `k3s-simplified`: [Getting Started Guide](https://github.com/easystartup-io/k3s-simplified#getting-started).
+3. Download `k3s-simplified`: [Getting Started Guide](https://k3s-simplified.easystartup.io/docs/getting-started/installation#installation-guide).
 4. Create a `cluster_config.yaml` file using the configuration provided below. This configuration sets up a High Availability (HA) cluster with 3 master nodes and 3 worker nodes. You can opt for a smaller setup (1 master + 1 worker) for testing purposes:
 
 ```yaml
