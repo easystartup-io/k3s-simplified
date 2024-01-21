@@ -69,9 +69,9 @@ public class CreateCluster {
         kubernetesInstaller.startInstallation();
 
         System.out.println(ConsoleColors.BLUE_BOLD + "%n=== Finished creating infrastructure resources ===%n" + ConsoleColors.RESET);
-        System.out.println("Your cluster is now created%n");
-        System.out.println("To connect to kubernetes run --%n");
-        System.out.printf("kubectl --kubeconfig=%s get nodes%n%n", Util.replaceFullHomePathWithTilda(mainSettings.getKubeconfigPath()));
+        System.out.println("Your cluster is now created\n");
+        System.out.println("To connect to kubernetes run --\n");
+        System.out.printf("kubectl --kubeconfig=%s get nodes%n%n", mainSettings.getKubeconfigPath());
     }
 
     private LoadBalancer createLoadBalancer() {
