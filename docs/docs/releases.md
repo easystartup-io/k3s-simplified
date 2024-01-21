@@ -5,6 +5,9 @@ sidebar_position: 75
 
 ## Release Updates and Versioning
 
+![GitHub Latest Release](https://img.shields.io/github/v/release/easystartup-io/k3s-simplified?label=latest%20release&style=for-the-badge) <br/>
+![GitHub Release Date](https://img.shields.io/github/release-date/easystartup-io/k3s-simplified?label=latest%20release%20date&style=for-the-badge)
+
 Stay up-to-date with the latest releases of **k3s-simplified** by checking our [GitHub Releases page](https://github.com/easystartup-io/k3s-simplified/releases).
 
 ### Automated Release Pipeline

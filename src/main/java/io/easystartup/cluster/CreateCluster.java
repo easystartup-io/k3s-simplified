@@ -66,6 +66,9 @@ public class CreateCluster {
 
         KubernetesInstaller kubernetesInstaller = new KubernetesInstaller(mainSettings, hetznerClient, loadBalancer, serverMap, network, firewall, sshKey);
         kubernetesInstaller.startInstallation();
+
+        System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Finished creating infrastructure resources ===\n" + ConsoleColors.RESET);
+        System.out.println("Your cluster is now created");
     }
 
     private LoadBalancer createLoadBalancer() {

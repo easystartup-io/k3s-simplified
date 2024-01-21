@@ -324,7 +324,6 @@ public class KubernetesInstaller {
     }
 
     private void deployClusterAutoscaler(String k3sToken) {
-        System.out.println("\nDeploying Cluster Autoscaler...");
         List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         Server firstMaster = serverList.get(0);
 
@@ -338,7 +337,9 @@ public class KubernetesInstaller {
             return;
         }
 
+        System.out.println("\nDeploying Cluster Autoscaler...");
         deployClusterAutoscaler(k3sToken, autoScalingWorkerNodePools, firstMaster);
+        System.out.println("\nFinished deploying Cluster Autoscaler...");
     }
 
     private void deployClusterAutoscaler(String k3sToken, Set<NodePool> autoScalingWorkerNodePools, Server firstMaster) {
@@ -413,8 +414,6 @@ public class KubernetesInstaller {
             System.out.println(result.getOutput());
             System.exit(1);
         }
-
-        System.out.println("...Cluster Autoscaler deployed.");
     }
 
     private AutoscalingClusterConfig createAutoscalingClusterConfig(Set<NodePool> autoScalingWorkerNodePools, String k3sJoinScript) {

@@ -93,7 +93,7 @@ public class CreateAccessBox {
                 The private and public keys have been copied to ~/.ssh/hetzner_rsa and ~/.ssh/hetzner_rsa.pub
                 The cloud_config.yaml has also been copied to the root directory and the ssh_key paths replaced accordingly in the cluster_config.yaml
                 And the hetzner token has been copied and set in the file itself
-                And the kubeconfig path has changed to './kubeconfig' in the cluster_config.yaml
+                And the kubeconfig path has changed to '~/.kube/config' in the cluster_config.yaml
                 """);
 
         System.out.println(getConnectToAccessBoxText(server));
@@ -192,6 +192,7 @@ public class CreateAccessBox {
         String content = null;
         try {
             content = new String(Files.readAllBytes(Paths.get(path)));
+            content = replaceOrAddYamlValue(content, "kubeconfig_path", "\"~/.kube/config\"");
             content = replaceOrAddYamlValue(content, "public_ssh_key_path", "\"~/.ssh/hetzner_rsa.pub\"");
             content = replaceOrAddYamlValue(content, "private_ssh_key_path", "\"~/.ssh/hetzner_rsa\"");
             content = replaceOrAddYamlValue(content, "hetzner_token", "\"" + mainSettings.getHetznerToken() + "\"");
