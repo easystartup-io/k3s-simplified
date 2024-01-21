@@ -14,3 +14,7 @@ else
 fi
 
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Add the kubeconfig file to end of /etc/environment so that kubectl will directly pick up that file
+
+sudo echo -e "{{ kubeconfig_path_global_env }}" >> /etc/environment

@@ -7,6 +7,7 @@ import io.easystartup.configuration.NodePool;
 import io.easystartup.kubernetes.KubernetesInstaller;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
+import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -67,8 +68,10 @@ public class CreateCluster {
         KubernetesInstaller kubernetesInstaller = new KubernetesInstaller(mainSettings, hetznerClient, loadBalancer, serverMap, network, firewall, sshKey);
         kubernetesInstaller.startInstallation();
 
-        System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Finished creating infrastructure resources ===\n" + ConsoleColors.RESET);
-        System.out.println("Your cluster is now created");
+        System.out.println(ConsoleColors.BLUE_BOLD + "%n=== Finished creating infrastructure resources ===%n" + ConsoleColors.RESET);
+        System.out.println("Your cluster is now created%n");
+        System.out.println("To connect to kubernetes run --%n");
+        System.out.printf("kubectl --kubeconfig=%s get nodes%n%n", Util.replaceFullHomePathWithTilda(mainSettings.getKubeconfigPath()));
     }
 
     private LoadBalancer createLoadBalancer() {
