@@ -1,25 +1,31 @@
 package io.easystartup.accessbox;
 
 import io.easystartup.cloud.hetzner.HetznerClient;
-import io.easystartup.cluster.CreateCluster;
 import io.easystartup.configuration.AccessBoxConfig;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
+import io.easystartup.utils.TemplateUtil;
+import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.Location;
 import me.tomsdevsn.hetznercloud.objects.general.Network;
 import me.tomsdevsn.hetznercloud.objects.general.SSHKey;
 import me.tomsdevsn.hetznercloud.objects.general.Server;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static io.easystartup.utils.ServerUtils.waitForServerToComeUp;
+import static io.easystartup.utils.Util.replaceTildaWithFullHomePath;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /*
@@ -27,20 +33,23 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  */
 public class CreateAccessBox {
 
-    private static final int MAX_INSTANCES_PER_PLACEMENT_GROUP = 10;
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
-    private final Map<CreateCluster.ServerType, List<Server>> serverMap = new ConcurrentHashMap();
+
+    private final String configurationFilePath;
 
     private final SSH ssh;
 
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
 
-    public CreateAccessBox(MainSettings mainSettings) {
+    public CreateAccessBox(MainSettings mainSettings, String configurationFilePath) {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
         this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
+        this.configurationFilePath = configurationFilePath;
+
+        configurationFilePath = replaceTildaWithFullHomePath(configurationFilePath);
 
         List<String> errors = new ArrayList<>();
         validateAccessBoxSettings(errors);
@@ -74,17 +83,145 @@ public class CreateAccessBox {
 
         Server server = createServer();
 
+        waitForServerToComeUp(server, ssh, mainSettings);
+
+        installItems(server);
+
         ConsoleColors.println("\n=== Finished creating access box===\n", ConsoleColors.BLUE_BOLD);
 
+        System.out.println("""
+                The private and public keys have been copied to ~/.ssh/hetzner_rsa and ~/.ssh/hetzner_rsa.pub
+                The cloud_config.yaml has also been copied to the root directory and the ssh_key paths replaced accordingly in the cluster_config.yaml
+                And the hetzner token has been copied and set in the file itself
+                And the kubeconfig path has changed to './kubeconfig' in the cluster_config.yaml
+                """);
+
         System.out.println(getConnectToAccessBoxText(server));
+
+        System.out.println("""
+                And after connecting just run 
+                k3s-simplified create --config cluster_config.yaml
+                """);
+    }
+
+    private void installItems(Server server) {
+        copyKeys(server);
+        copyClusterConfig(server);
+        installK3sSimplified(server);
+    }
+
+    private void installK3sSimplified(Server server) {
+        System.out.println("Installing k3s-simplified");
+        Map<String, Object> map = new HashMap<>();
+        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_K3S_SIMPLIFIED, map);
+
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        System.out.println(output);
+        System.out.println("Finished installing k3s-simplified");
+    }
+
+    /**
+     * echo '{{ private_key }}' > '{{ private_key_path }}'
+     * <p>
+     * echo '{{ public_key }}' > '{{ public_key_path }}'
+     * <p>
+     * echo '{{ cluster_config }}' > '{{ cluster_config_path }}'
+     */
+
+    private void copyKeys(Server server) {
+        System.out.println("Copying ssh keys to access box");
+        Map<String, Object> map = new HashMap<>();
+        map.put("private_key", getPrivateKeyFromFile());
+        map.put("private_key_path", "~/.ssh/hetzner_rsa");
+        map.put("public_key", getPublicKeyFromFile());
+        map.put("public_key_path", "~/.ssh/hetzner_rsa.pub");
+        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_SSH_KEYS, map);
+
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        System.out.println(output);
+        System.out.println("Finished copying ssh keys");
+    }
+
+    private void copyClusterConfig(Server server) {
+        System.out.println("Copying cluster_config.yaml to access box");
+        Map<String, Object> map = new HashMap<>();
+        map.put("cluster_config", getModifiedClusterConfig());
+        map.put("cluster_config_path", "~/cluster_config.yaml");
+
+        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_CLUSTER_CONFIG, map);
+
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        System.out.println(output);
+        System.out.println("Finished copying cluster_config.yaml");
+    }
+
+    private String getPublicKeyFromFile() {
+        String publicSSHKeyPath = mainSettings.getPublicSSHKeyPath();
+        try {
+            return IOUtils.toString(new FileInputStream(publicSSHKeyPath));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    private String getPrivateKeyFromFile() {
+        String privateSSHKeyPath = mainSettings.getPrivateSSHKeyPath();
+        try {
+            return IOUtils.toString(new FileInputStream(privateSSHKeyPath));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    private String getModifiedClusterConfig() {
+        String path = replaceTildaWithFullHomePath(configurationFilePath);
+
+        String content = null;
+        try {
+            content = new String(Files.readAllBytes(Paths.get(path)));
+            content = replaceOrAddYamlValue(content, "public_ssh_key_path", "\"~/.ssh/hetzner_rsa.pub\"");
+            content = replaceOrAddYamlValue(content, "private_ssh_key_path", "\"~/.ssh/hetzner_rsa\"");
+            content = replaceOrAddYamlValue(content, "hetzner_token", "\"" + mainSettings.getHetznerToken() + "\"");
+            content = replaceOrAddYamlValue(content, "use_ssh_agent", "false");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return content;
+    }
+
+    private String replaceOrAddYamlValue(String content, String key, String value) {
+        // Check if the key is already present
+        String patternString = "(?m)^(" + Pattern.quote(key) + ": ).*$";
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher matcher = pattern.matcher(content);
+
+        if (matcher.find()) {
+            // If key is present, replace its value
+            return matcher.replaceAll("$1" + value);
+        } else {
+            // If key is not present, append the key-value pair
+            return content + "\n" + key + ": " + value;
+        }
     }
 
     private String getConnectToAccessBoxText(Server server) {
-        return String.format("""
-                To connect to access box run this command,
-                                
-                ssh root@%s -p %s -i %s
-                """, server.getPublicNet().getIpv4().getIp(), mainSettings.getSshPort(), mainSettings.getPrivateSSHKeyPath());
+        String privateSSHKeyPath = Util.replaceFullHomePathWithTilda(mainSettings.getPrivateSSHKeyPath());
+        if (mainSettings.getSshPort() != 22) {
+            return String.format("""
+                    To connect to access box run this command,
+                                    
+                    ssh root@%s -p %s -i %s
+                    """, server.getPublicNet().getIpv4().getIp(), mainSettings.getSshPort(), privateSSHKeyPath);
+        } else {
+            return String.format("""
+                    To connect to access box run this command,
+                                    
+                    ssh root@%s -i %s
+                    """, server.getPublicNet().getIpv4().getIp(), privateSSHKeyPath);
+        }
     }
 
     private Network findOrCreateNetwork() {

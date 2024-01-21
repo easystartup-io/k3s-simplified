@@ -155,7 +155,7 @@ public class Main {
                 if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
                     return;
                 }
-                new io.easystartup.accessbox.CreateAccessBox(configurationLoader.getSettings()).initialize();
+                new io.easystartup.accessbox.CreateAccessBox(configurationLoader.getSettings(), config).initialize();
             } catch (Throwable throwable) {
                 System.out.println(throwable.getMessage());
             }

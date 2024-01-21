@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static io.easystartup.utils.Util.replaceTildaWithFullHomePath;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 
@@ -39,7 +40,7 @@ public class ConfigurationLoader {
 
     // Constructor
     public ConfigurationLoader(String configurationFilePath) {
-        configurationFilePath = replaceFilePathIfStartsWithTilda(configurationFilePath);
+        configurationFilePath = replaceTildaWithFullHomePath(configurationFilePath);
 
         String content;
         try {
@@ -406,13 +407,9 @@ public class ConfigurationLoader {
     }
 
     private void replaceTildeWithUserHomeDirectory(MainSettings settings) {
-        settings.setKubeconfigPath(replaceFilePathIfStartsWithTilda(settings.getKubeconfigPath()));
-        settings.setPrivateSSHKeyPath(replaceFilePathIfStartsWithTilda(settings.getPrivateSSHKeyPath()));
-        settings.setPublicSSHKeyPath(replaceFilePathIfStartsWithTilda(settings.getPublicSSHKeyPath()));
-    }
-
-    private String replaceFilePathIfStartsWithTilda(String path) {
-        return path.startsWith("~") ? path.replaceFirst("~", System.getProperty("user.home")) : path;
+        settings.setKubeconfigPath(replaceTildaWithFullHomePath(settings.getKubeconfigPath()));
+        settings.setPrivateSSHKeyPath(replaceTildaWithFullHomePath(settings.getPrivateSSHKeyPath()));
+        settings.setPublicSSHKeyPath(replaceTildaWithFullHomePath(settings.getPublicSSHKeyPath()));
     }
 
 }

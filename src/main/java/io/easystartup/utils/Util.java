@@ -42,4 +42,14 @@ public class Util {
             System.exit(1);
         }
     }
+
+    public static String replaceTildaWithFullHomePath(String path) {
+        return path.startsWith("~") ? path.replaceFirst("~", System.getProperty("user.home")) : path;
+    }
+
+    public static String replaceFullHomePathWithTilda(String path) {
+        String home = System.getProperty("user.home");
+        return path.startsWith(home) ? path.replaceFirst(home, "~") : path;
+    }
+
 }
