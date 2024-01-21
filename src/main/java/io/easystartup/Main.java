@@ -36,6 +36,8 @@ public class Main {
             subcommands = {
                     CreateCluster.class,
                     DeleteCluster.class,
+                    UpgradeCluster.class,
+                    ListK3sReleases.class,
                     CreateAccessBox.class
             }
     )
@@ -46,19 +48,6 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             throw new CommandLine.ParameterException(spec.commandLine(), "Please enter a command like \"create\" or \"delete\" etc...\n");
-        }
-
-        @Command(name = "releases", description = "# List the available k3s releases")
-        public void listReleases() {
-            List<String> releaseName = new Releases().availableReleases();
-            for (String release : releaseName) {
-                System.out.println(release);
-            }
-        }
-
-        @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")
-        public void upgradeCluster() {
-            System.out.println("Not yet implemented");
         }
 
         static class PropertiesVersionProvider implements CommandLine.IVersionProvider {
@@ -120,6 +109,34 @@ public class Main {
             }
         }
     }
+
+    @Command(name = "releases", description = "# List the available k3s releases")
+    public static class ListK3sReleases implements Runnable {
+        @Override
+        public void run() {
+            try {
+                List<String> releaseName = new Releases().availableReleases();
+                for (String release : releaseName) {
+                    System.out.println(release);
+                }
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
+            }
+        }
+    }
+
+    @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")
+    public static class UpgradeCluster implements Runnable {
+        @Override
+        public void run() {
+            try {
+                System.out.println("Not yet implemented");
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
+            }
+        }
+    }
+
 
     @Command(name = "create-access-box", description = "# Create an access-box/jump-box to hop into your private kubernetes cluster")
     public static class CreateAccessBox implements Runnable {
