@@ -72,9 +72,19 @@ public class CreateAccessBox {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
-        createServer();
+        Server server = createServer();
 
         ConsoleColors.println("\n=== Finished creating access box===\n", ConsoleColors.BLUE_BOLD);
+
+        System.out.println(getConnectToAccessBoxText(server));
+    }
+
+    private String getConnectToAccessBoxText(Server server) {
+        return String.format("""
+                To connect to access box run this command,
+                                
+                ssh root@%s -p %s -i %s
+                """, server.getPublicNet().getIpv4().getIp(), mainSettings.getSshPort(), mainSettings.getPrivateSSHKeyPath());
     }
 
     private Network findOrCreateNetwork() {
@@ -83,7 +93,6 @@ public class CreateAccessBox {
         if (StringUtils.isNotBlank(existingNetworkName)) {
             return nw.find(existingNetworkName);
         }
-
         return createNetwork();
     }
 
@@ -117,21 +126,19 @@ public class CreateAccessBox {
         return keys.create(clusterName, publicSSHKeyPath);
     }
 
-    private void createServer() {
+    private Server createServer() {
         NodePool node = mainSettings.getAccessBoxConfig().getNode();
-        createAccessBox(node);
+        return createAccessBox(node);
     }
 
     private Server createAccessBox(NodePool nodePool) {
         String clusterName = mainSettings.getClusterName();
         String instanceType = nodePool.getInstanceType();
         String name = isBlank(nodePool.getName()) ? "access-box" : nodePool.getName();
-        String nodeName = String.format("%s-%s-%s-access", clusterName, instanceType, name);
+        String nodeName = String.format("%s-%s-%s-access", name, clusterName, instanceType);
         String image = isBlank(nodePool.getImage()) ? mainSettings.getImage() : nodePool.getImage();
-        String[] additionalPackages = nodePool.getAdditionalPackages() == null ?
-                mainSettings.getAdditionalPackages() : nodePool.getAdditionalPackages();
-        String[] postCreateCommands = nodePool.getPostCreateCommands() == null ?
-                mainSettings.getPostCreateCommands() : nodePool.getPostCreateCommands();
+        String[] additionalPackages = nodePool.getAdditionalPackages();
+        String[] postCreateCommands = nodePool.getPostCreateCommands();
         String location = nodePool.getLocation();
         Server server = hetznerClient.findServer(nodeName);
         if (server != null) {
