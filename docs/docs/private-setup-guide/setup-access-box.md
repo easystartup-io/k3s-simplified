@@ -12,54 +12,43 @@ Skip this step if you have already setup access box.
 
 An access box, also known as a jump box, is a secure computer that you can utilize as a stepping stone to access other devices or servers in a separate security zone. The primary purpose of a jump box is to provide a controlled means of access between two dissimilar security zones, enhancing the overall security posture of the network. By funneling all traffic through a single point, it simplifies security management and minimizes the risk of unauthorized access. 
 
-It basically provides a way to connect to our kubernets cluster using the private network ips.
+It basically provides a way to connect to our kubernetes cluster using the private network ips.
 
-### 1. Setup VM
+![jump box](jump-box.jpg)
 
-Setting up a virtual machine (VM) is the first step in creating a jump box. This VM acts as the jump box, running on a secure host and providing a gateway to other network resources.
+### 1. Setup using k3s-simplified
 
-### 2. Use a VPN-Based Whitelisting or Just SSH-Based Whitelisting
+In your cluster_config.yaml ensure that you fill in all the other details as required in the final cluster and add the accessBoxConfig field also.
 
-Implement a VPN-based or SSH-based whitelisting system. VPN-based whitelisting provides a secure tunnel for accessing the network, while SSH-based whitelisting restricts access to pre-approved SSH keys, ensuring that only authorized users can connect.
+:::warning
+Ensure that the node instance type and location you select is in the same region as your other nodes. Because of this [hetzner limitation](https://docs.hetzner.com/cloud/general/locations/#are-there-any-restrictions).
+:::
 
-### 3. Secure the Box
+```yaml
+hetzner_token: <token>
+cluster_name: test-k3s
+kubeconfig_path: "./kubeconfig"
+k3s_version: v1.29.0+k3s1
+public_ssh_key_path: "~/.ssh/hetzner_rsa.pub"
+private_ssh_key_path: "~/.ssh/hetzner_rsa"
+# ... other config items
+// highlight-start
+accessBoxConfig:
+  node:
+    instance_type: cax21
+    location: nbg1
+    image: 103908130
+// highlight-end
+```
 
-Securing the jump box is critical for network security.
+### 2. Run the command to create the access box
 
-   1. **Disable SSH Password Authentication**: Disabling SSH password authentication and using key-based authentication enhances security, as key-based logins are more resistant to brute-force attacks.
-   
-   2. **Fail2Ban**: Implement Fail2Ban to monitor log files for suspicious login attempts and temporarily or permanently ban IPs that show malicious signs.
-   
-   3. **Install Monitoring Tool Like Monit**: Use Monit or similar tools for proactive monitoring of the jump box to ensure its health and security.
-   
-   4. **Configure Firewall**: Set up a firewall to control incoming and outgoing network traffic based on predetermined security rules. Limit access to necessary services only.
+```bash
+k3s-simplified create-access-box --config cluster_config.yaml
+```
 
-### 4. VPN Services Installation (Optional)
+It will give you the output of the ip to connect to. And then you can install your k3s-cluster from inside the jump-box
 
-Install and configure VPN services like OpenVPN, PPTP, or SoftEther VPN, depending on your security requirements. VPNs offer encrypted connections, which enhance the security of data transmission between the jump box and the internal network.
-
-   - **OpenVPN**: A robust, open-source VPN solution, suitable for secure enterprise deployments.
-   - **PPTP VPN**: Although considered less secure, it's easier to set up and can be suitable for less critical applications.
-   - **SoftEther VPN**: A versatile multi-protocol VPN software, offering a variety of connection methods and strong security features.
-
-### 5. Access Control and User Management
-
-Implement strict access control policies. Restrict the jump box access to specific subnets or VPNs and avoid making it accessible from the internet. Manage user access carefully, allowing only authorized personnel to use the jump box.
-
-   - **User Authentication**: Use strong, multi-factor authentication for user access.
-   - **User Authorization**: Limit user privileges based on roles and requirements. Ensure that users have access only to the necessary resources.
-
-### 6. Regular Maintenance and Updates
-
-Regularly update the operating system and all installed software on the jump box to protect against vulnerabilities. Perform routine security audits and monitoring to detect and address potential security threats.
-
-### 7. Logging and Auditing
-
-Ensure that all activities performed through the jump box are logged. Store these logs securely for compliance, audit, and forensic purposes.
-
-### 8. Network Configuration
-
-Configure the network settings of the jump box to ensure that it can communicate securely with the resources it needs to access, while isolating it from unnecessary network segments.
 
 ### Conclusion
 

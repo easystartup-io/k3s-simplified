@@ -6,6 +6,7 @@ import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
+import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,15 +36,16 @@ public class DeleteCluster {
 
     public void deleteCluster() {
         System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Deleting infrastructure resources ===\n" + ConsoleColors.RESET);
+        deleteLoadBalancer();
+        // Todo: try to do in parallel
+        deleteServers(serverMap);
         findAndDeleteNetworks();
+        // Need to delete firewall in the end because it does not allow to delete unless all servers are deleted
+        Util.sleep(15_000L);
         deleteFirewall();
         System.out.println("Not deleting SSH, in case its being used with other boxes");
+
         deleteSSH();
-
-        // Todo: try to do in parallel
-        createServers(serverMap);
-        deleteLoadBalancer();
-
     }
 
     private void deleteLoadBalancer() {
@@ -59,7 +61,7 @@ public class DeleteCluster {
     }
 
 
-    private void createServers(Map<CreateCluster.ServerType, List<Server>> serverList) {
+    private void deleteServers(Map<CreateCluster.ServerType, List<Server>> serverList) {
         for (CreateCluster.ServerType value : CreateCluster.ServerType.values()) {
             serverList.putIfAbsent(value, new CopyOnWriteArrayList<>());
         }

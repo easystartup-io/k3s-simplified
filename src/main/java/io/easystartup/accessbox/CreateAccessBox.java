@@ -124,6 +124,7 @@ public class CreateAccessBox {
     private void installKubectl(Server server) {
         System.out.println("Installing kubectl");
         Map<String, Object> map = new HashMap<>();
+        // https://github.com/kubernetes/kubernetes/issues/7339
         map.put("kubeconfig_path_global_env", "KUBECONFIG=${HOME}/kubeconfig");
         String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_KUBECTL, map);
 
