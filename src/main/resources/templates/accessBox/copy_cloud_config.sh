@@ -5,3 +5,5 @@ touch {{ cluster_config_path }}
 tee -a {{ cluster_config_path }} <<EOF
 {{ cluster_config }}
 EOF
+
+chmod 600 {{ cluster_config_path }}

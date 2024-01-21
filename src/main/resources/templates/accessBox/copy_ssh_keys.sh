@@ -10,3 +10,6 @@ EOF
 tee -a {{ public_key_path }} <<EOF
 {{ public_key }}
 EOF
+
+chmod 600 {{ private_key_path }}
+chmod 600 {{ public_key_path }}

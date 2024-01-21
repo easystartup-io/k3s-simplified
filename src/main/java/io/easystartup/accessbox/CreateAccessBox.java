@@ -108,6 +108,7 @@ public class CreateAccessBox {
         copyKeys(server);
         copyClusterConfig(server);
         installK3sSimplified(server);
+        installKubectl(server);
     }
 
     private void installK3sSimplified(Server server) {
@@ -118,6 +119,16 @@ public class CreateAccessBox {
         String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
         System.out.println(output);
         System.out.println("Finished installing k3s-simplified");
+    }
+
+    private void installKubectl(Server server) {
+        System.out.println("Installing kubectl");
+        Map<String, Object> map = new HashMap<>();
+        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_KUBECTL, map);
+
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        System.out.println(output);
+        System.out.println("Finished installing kubectl");
     }
 
     /**

@@ -676,16 +676,19 @@ public class KubernetesInstaller {
     private Triple<String, Server, Integer> getK3sTokenByFallingBackToDifferentMasters() {
         List<Server> serverList = servers.get(CreateCluster.ServerType.MASTER);
         String token = null;
-        int masterServerIndex = 0;
+        Integer masterServerIndex = null;
         Server masterServerWithToken = null;
+
+        int index = 0;
         for (Server server : serverList) {
             String command = "cat /var/lib/rancher/k3s/server/node-token";
             token = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
             if (StringUtils.isNotBlank(token)) {
                 masterServerWithToken = server;
+                masterServerIndex = index;
                 break;
             }
-            masterServerIndex++;
+            index++;
         }
 
         if (token == null || token.isEmpty()) {
