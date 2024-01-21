@@ -56,13 +56,13 @@ public class ConfigurationLoader {
 
         replaceTildeWithUserHomeDirectory(settings);
 
+        validateHetznerToken(errors);
+        this.hetznerClient = new HetznerClient(settings.getHetznerToken());
+
         Map<String, ServerType> fullServerTypes = hetznerClient.getServerTypes().stream().collect(Collectors.toMap(ServerType::getName, Function.identity()));
         serverTypes = fullServerTypes.keySet();
 
         populateArchitecturesInWorkerNodePools(fullServerTypes);
-
-        validateHetznerToken(errors);
-        this.hetznerClient = new HetznerClient(settings.getHetznerToken());
     }
 
     private void populateArchitecturesInWorkerNodePools(Map<String, ServerType> fullServerTypes) {

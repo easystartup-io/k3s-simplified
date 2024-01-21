@@ -22,7 +22,7 @@ api_allowed_networks:
   - 0.0.0.0/0 # ensure your current IP is included in the range
 private_network_subnet: 10.0.0.0/16 # ensure this doesn't overlap with other networks in the same project
 disable_flannel: false # set to true if you want to install a different CNI
-schedule_workloads_on_masters: false
+# schedule_workloads_on_masters: false
 # debug: true # To see in realtime what scripts are being executed, beware it will print the tokens so please dont run when in hostile env
 # cluster_cidr: 10.244.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for pod IPs
 # service_cidr: 10.43.0.0/16 # optional: a custom IPv4/IPv6 network CIDR to use for service IPs

@@ -35,7 +35,8 @@ public class Main {
             commandListHeading = "%nSubcommands:%n",
             subcommands = {
                     CreateCluster.class,
-                    DeleteCluster.class
+                    DeleteCluster.class,
+                    CreateAccessBox.class
             }
     )
     public static class K3sSimplifier implements Callable<Integer> {
@@ -114,6 +115,30 @@ public class Main {
                     return;
                 }
                 new io.easystartup.cluster.DeleteCluster(configurationLoader.getSettings()).deleteCluster();
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
+            }
+        }
+    }
+
+    @Command(name = "create-access-box", description = "# Create an access-box/jump-box to hop into your private kubernetes cluster")
+    public static class CreateAccessBox implements Runnable {
+
+        @CommandLine.Option(names = {"-c", "--config"}, required = true, description = "# The path of the YAML configuration file")
+        private String config;
+
+        @Override
+        public void run() {
+            try {
+                ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
+                configurationLoader.validate();
+                for (String error : configurationLoader.getErrors()) {
+                    System.out.println(error);
+                }
+                if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                    return;
+                }
+                new io.easystartup.accessbox.CreateAccessBox(configurationLoader.getSettings()).initialize();
             } catch (Throwable throwable) {
                 System.out.println(throwable.getMessage());
             }

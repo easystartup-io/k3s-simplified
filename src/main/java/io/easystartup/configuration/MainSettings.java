@@ -143,6 +143,8 @@ public class MainSettings {
 
     @JsonProperty("debug")
     private boolean debug;
+
+    private AccessBoxConfig accessBoxConfig;
     public String getHetznerToken() {
         return hetznerToken;
     }
@@ -538,5 +540,13 @@ public class MainSettings {
 
     public void setAutoscalerVersion(AutoScalerVersion autoscalerVersion) {
         this.autoscalerVersion = autoscalerVersion;
+    }
+
+    public AccessBoxConfig getAccessBoxConfig() {
+        return accessBoxConfig;
+    }
+
+    public void setAccessBoxConfig(AccessBoxConfig accessBoxConfig) {
+        this.accessBoxConfig = accessBoxConfig;
     }
 }

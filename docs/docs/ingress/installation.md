@@ -10,10 +10,10 @@ When you use a load balancer that terminates TCP connections, the Proxy Protocol
 
 To configure an NGINX Ingress controller to use the Proxy Protocol, you can make the following adjustments to your configuration:
 
-1. **In the Helm `values.yaml` file** of the nginx-ingress controller: Set `use-proxy-protocol` to `"true"` in the `config` secttion. 
-2. Additionally, add the annotation `load-balancer.hetzner.cloud/uses-proxyprotocol: 'true'` under `service` > `annotations`.
+1. **In the Helm `values.yaml` file** of the nginx-ingress controller: Set `use-proxy-protocol` to `"true"` in the `config` section. 
+2. Additionally, add the annotation `load-balancer.hetzner.cloud/uses-proxyprotocol: 'true'`
 
-```
+```yaml
   controller:
   service:
     annotations:
@@ -22,6 +22,7 @@ To configure an NGINX Ingress controller to use the Proxy Protocol, you can make
       load-balancer.hetzner.cloud/type: lb11
       load-balancer.hetzner.cloud/hostname: easystartup.example.com
       load-balancer.hetzner.cloud/http-redirect-https: 'false'
+      # highlight-next-line 
       load-balancer.hetzner.cloud/uses-proxyprotocol: 'true'
       load-balancer.hetzner.cloud/use-private-ip: 'true'
   replicaCount: 2

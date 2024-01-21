@@ -31,7 +31,6 @@ public class DeleteCluster {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
         this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
-        ;
     }
 
     public void deleteCluster() {

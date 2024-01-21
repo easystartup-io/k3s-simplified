@@ -1,19 +1,19 @@
 ---
 sidebar_position: 3
-title: Setting up a basic cluster
+title: Basic Cluster Setup Guide
 ---
-By [TitanFighter](https://github.com/TitanFighter)
+Created by [TitanFighter](https://github.com/TitanFighter)
 
-## Instructions
+## Step-by-Step Instructions
 
-### Installation of a "hello-world" project
+### Initial Project Setup with "hello-world"
 
-For testing we are going to use this [hello-world](https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml) app
+We'll begin with a [hello-world](https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml) application for initial testing.
 
-1. Install `kubectl` on your computer: https://kubernetes.io/docs/tasks/tools/#kubectl
-2. Install `Helm` on your computer: https://helm.sh/docs/intro/install/
-3. Install `k3s-simplified` on your computer: https://github.com/easystartup-io/k3s-simplified#getting-started
-4. Create file `cluster_config.yaml` with the config below (this is a config for High Available (HA) cluster with 3 master nodes + 3 worker nodes. You can use 1+1 for testing):
+1. Download `kubectl`: [Installation Guide](https://kubernetes.io/docs/tasks/tools/#kubectl).
+2. Download `Helm`: [Installation Guide](https://helm.sh/docs/intro/install/).
+3. Download `k3s-simplified`: [Getting Started Guide](https://github.com/easystartup-io/k3s-simplified#getting-started).
+4. Create a `cluster_config.yaml` file using the configuration provided below. This configuration sets up a High Availability (HA) cluster with 3 master nodes and 3 worker nodes. You can opt for a smaller setup (1 master + 1 worker) for testing purposes:
 
 ```yaml
 hetzner_token: nRTJFfhIGNT..........
@@ -47,15 +47,15 @@ worker_node_pools:
     max_instances: 3
 ```
 
-5. Create cluster: `k3s-simplified create --config cluster_config.yaml`
-6. `k3s-simplified` automatically creates a `kubeconfig`file for the cluster in the directory of your computer where you run the tool,
-so you can either copy the `kubeconfig` file to `~/.kube/config` if it's the only cluster, or run `export KUBECONFIG=./kubeconfig`
-in the same directory to access the cluster. Then you can interact with your cluster via `kubectl` installed in the 1st step.
+5. Use `k3s-simplified` to create the cluster: `k3s-simplified create --config cluster_config.yaml`.
+6. `k3s-simplified` will generate a `kubeconfig` file in the tool's run directory. To access your cluster with `kubectl` (installed in step 1), either move the `kubeconfig` file to `~/.kube/config` or set the environment variable `export KUBECONFIG=./kubeconfig`.
 
-TIP: If you don't want to run `kubectl apply ...` every time, you can store all configs in some folders and then run `kubectl apply -f /path/to/configs/ -R`.
+:::tip
+Store all configurations in a specific folder to avoid repeatedly running `kubectl apply ...`. Use `kubectl apply -f /path/to/configs/ -R`.
+:::
 
-7. Create file: `touch ingress-nginx-annotations.yaml`
-8. Add annotations to the file: `nano ingress-nginx-annotations.yaml`
+7. Create a new file: `touch ingress-nginx-annotations.yaml`.
+8. Open and edit the new file: `nano ingress-nginx-annotations.yaml`.
 
 ```yaml
 # INSTALLATION
@@ -113,8 +113,8 @@ controller:
       load-balancer.hetzner.cloud/http-redirect-https: 'false'
 ```
 
-9. Add ingress-nginx Helm repo: `helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`
-10. Update information of available charts locally from chart repositories: `helm repo update`
+9. Add ingress-nginx repository: `helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`.
+10. Update local chart information: `helm repo update`.
 11. Install ingress-nginx:
 
 ```bash
@@ -125,14 +125,14 @@ ingress-nginx ingress-nginx/ingress-nginx \
 --create-namespace
 ```
 
-TIP: Just in case you need to delete it: `helm uninstall ingress-nginx -n ingress-nginx`.
-Be careful, this will delete current Hetzner's load balancer as a result when you install a new ingress controller,
-new Hetzner's load balancer possibly will be created with a new public IP address.
+:::warning
+To uninstall ingress-nginx and associated Hetzner load balancer: `helm uninstall ingress-nginx -n ingress-nginx`. This will delete current Hetzner's load balancer as a result when you install a new ingress controller, new Hetzner's load balancer will be created with a new public IP address.
+:::
 
-12. In a few minutes check that the "EXTERNAL-IP" column has IP instead of "pending": `kubectl get svc -n ingress-nginx`
-13. Open your Hetzner's cloud console (site), "Your project -> Load Balancers" and find PUBLIC IP in front of the name you used with "load-balancer.hetzner.cloud/name: WORKERS_LOAD_BALANCER_NAME" annotation. Copy/Remember this IP.
-14. Download hello-world app: `curl https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml --output hello-world.yaml`
-15. Edit the file (add annotation + add Hetzner's Load Balancer IP Address) and set the hostname:
+12. Verify that "EXTERNAL-IP" is assigned (not "pending"): `kubectl get svc -n ingress-nginx`.
+13. In Hetzner's cloud console, locate the PUBLIC IP associated with `WORKERS_LOAD_BALANCER_NAME` from the `load-balancer.hetzner.cloud/name` annotation.
+14. Download the hello-world application: `curl [hello-world URL] --output hello-world.yaml`.
+15. Modify `hello-world.yaml` to include annotations and Hetzner's Load Balancer IP.
 
 ```yaml
 ---
@@ -148,17 +148,14 @@ spec:
   ....
 ```
 
-16. Install hello-world app: `kubectl apply -f hello-world.yaml`
-17. Check http://hello-world.IP_FROM_STEP_13.nip.io
-You should see the RANCHER Hello world! page.
+16. Deploy the hello-world app: `kubectl apply -f hello-world.yaml`.
+17. Test the application at `http://hello-world.IP_FROM_STEP_13.nip.io`. You should see the RANCHER Hello world! page.
 "host.IP_FROM_STEP_13.nip.io" (the key part is ".nip.io") is just a quick way to test things without configuring DNS (a query to a hostname ending in nip.io simply returns the IP address it finds in the hostname itself).
-18. In order to connect yourDomain.com, you need to:
- - assign IP address from the step 13 to your domain in DNS panel of your domain registrar;
- - change "- host: hello-world.IP_FROM_STEP_13.nip.io" to "- host: yourDomain.com";
- - `kubectl apply -f hello-world.yaml`
- - wait 1-30 mins until DNS records are updated.
 
-If you need LetsEncrypt
+18. For connecting a real domain, assign the IP from step 13 to your domain in the DNS registrar of your domain, and modify `- host: hello-world.IP_FROM_STEP_13.nip.io` in `hello-world.yaml` to use `- host: yourDomain.com`. Apply the changes `kubectl apply -f hello-world.yaml and wait 1-30mins for DNS update.
+
+For LetsEncrypt SSL:
+
 19. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
 20. Add content to just created file: `nano ingress-nginx-configmap.yaml`
 
@@ -173,10 +170,10 @@ data:
   use-proxy-protocol: "true"
 ```
 
-21. Apply config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`
-22. Add LetsEncrypt Helm repo: `helm repo add jetstack https://charts.jetstack.io`
-23. Update information of available charts locally from chart repositories: `helm repo update`
-24. Install LetsEncrypt certificates issuer:
+21. Apply the config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`.
+22. Add the LetsEncrypt Helm repository: `helm repo add jetstack https://charts.jetstack.io`.
+23. Update local chart information: `helm repo update`.
+24. Install LetsEncrypt certificate issuer:
 
 ```bash
 helm upgrade --install \
@@ -186,7 +183,7 @@ helm upgrade --install \
 cert-manager jetstack/cert-manager
 ```
 
-25. Create file `lets-encrypt.yaml` with content:
+25. Create and apply the `lets-encrypt.yaml` file:
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -229,9 +226,9 @@ spec:
   ....
 ```
 
-28. Apply changes: `kubectl apply -f ./hello-world.yaml`
+27. Apply the updated hello-world application: `kubectl apply -f ./hello-world.yaml`.
 
-Instructions are based on the README + [this answer](https://github.com/vitobotta/hetzner-k3s/issues/13#issuecomment-901857297).
+The instructions are based on the README and [a specific GitHub discussion](https://github.com/vitobotta/hetzner-k3s/issues/13#issuecomment-901857297).
 
 ## FAQs
 
@@ -303,8 +300,8 @@ To simplify everything, in the case of Nginx...
 - Ingress Controller has different annotations (rules). You can use them inside `kind: Ingress` as a result such rules become "global" and inside `kind: Service` as a result such rules become "local" (service-specific).
 - Ingress Controller consists of a Pod and a Service. The Pod runs the Controller, which constantly polls the /ingresses endpoint on the API server of your cluster for updates to available Ingress Resources.
 
+:::tip 
 ## Useful commands
-
 ```bash
 kubectl get service [serviceName] -A or -n [nameSpace]
 kubectl get ingress [ingressName] -A or -n [nameSpace]
@@ -320,7 +317,10 @@ kubectl delete configmap nginx-config -n ingress-nginx
 kubectl rollout restart deployment -n NAMESPACE_OF_YOUR_APP
 kubectl get all -A` does not include "ingress", as a result you need to use `kubectl get ing -A
 ```
+:::
 
-##  Useful links
-Cheat Sheet - https://kubernetes.io/docs/reference/kubectl/cheatsheet/
-A visual guide on troubleshooting Kubernetes deployments - https://learnk8s.io/troubleshooting-deployments
+:::tip 
+## Useful links
+1. [Kubernetes Cheat Sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)
+2. [Troubleshooting Kubernetes Deployments](https://learnk8s.io/troubleshooting-deployments)
+:::

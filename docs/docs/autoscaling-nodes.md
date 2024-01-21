@@ -24,11 +24,25 @@ For autoscaling nodes I have used the official kubernetes [Cluster Autoscaler fo
 
 1. **Enable autoscaling for the node pool**
 
-    set autoscaling -> enabled to `true`
+    Enable autoscaling by setting `enabled` to true
+
+    ```yaml
+    worker_node_pools:
+      - name: big-autoscaled
+        instance_type: cpx31
+        instance_count: 2
+        location: fsn1
+        # highlight-start
+        autoscaling:
+          enabled: true
+        # highlight-end
+          min_instances: 0
+          max_instances: 3
+    ```
 
 2. **Set the required instance counts**
 
-    set autoscaling -> min_instances and max_instances to handle accordingly
+    Set your `min_instances` and `max_instances` according to your use case
 
     ```yaml
     worker_node_pools:
@@ -38,15 +52,17 @@ For autoscaling nodes I have used the official kubernetes [Cluster Autoscaler fo
         location: fsn1
         autoscaling:
           enabled: true
+        # highlight-start
           min_instances: 0
           max_instances: 3
+        # highlight-end
     ```
 
 3. **Set the right images**
 
     Set the images to be used for autoscaling in cluster_config.yaml file
 
-    ```
+    ```yaml
     autoscaling_image_x64: 67794396 #Image to be used for x64 instance autoscaling, 
     autoscaling_image_arm64: 103908130 #Image to be used for arm instance autoscaling
     ```
