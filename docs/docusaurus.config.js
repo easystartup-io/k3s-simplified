@@ -148,7 +148,7 @@ const config = {
         indexName: 'k3s-simplified-easystartup',
   
         // Optional: see doc section below
-        contextualSearch: true,
+        // contextualSearch: true,
   
         // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
         externalUrlRegex: 'k3s-simplified.easystartup.io\\.com|easystartup\\.io',
