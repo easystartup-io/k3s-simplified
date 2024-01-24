@@ -143,7 +143,7 @@ const config = {
         appId: 'MX6MD4MZDG',
   
         // Public API key: it is safe to commit it
-        apiKey: '860d1192d614cfe5d89edd12d5f4026e',
+        apiKey: 'b42739ffc69574d81c5a7dc7eff9cd75',
   
         indexName: 'k3s-simplified-easystartup',
   
@@ -151,7 +151,7 @@ const config = {
         contextualSearch: true,
   
         // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
-        // externalUrlRegex: 'external\\.com|easystartup\\.io',
+        externalUrlRegex: 'k3s-simplified.easystartup.io\\.com|easystartup\\.io',
   
         // Optional: Replace parts of the item URLs from Algolia. Useful when using the same search index for multiple deployments using a different baseUrl. You can use regexp or string in the `from` param. For example: localhost:3000 vs myCompany.com/docs
         // replaceSearchResultPathname: {
