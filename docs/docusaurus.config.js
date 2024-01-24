@@ -61,7 +61,14 @@ const config = {
       }),
     ],
   ],
-
+  scripts: [
+    {
+        "data-id": "65b11bb995b7cf3fd62c182d",
+        "data-api": process.env.NODE_ENV === "production" ? "https://analytics.easystartup.io" : "http://localhost:8081",
+        src: process.env.NODE_ENV === "production" ? "https://scripts.easystartup.io/js/script.js" : "http://localhost:3000/js/script.js",
+        async: true,
+    },
+],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
