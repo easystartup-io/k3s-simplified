@@ -22,7 +22,7 @@ k3s-simplified is a command-line tool for rapid Kubernetes cluster creation and 
 
 - **Rapid Deployment**: Set up a fully functional HA k3s cluster with master and worker nodes in 2-3 minutes.
 - **Comprehensive Setup**: Includes infrastructure creation (servers, networks, firewalls), k3s deployment, and essential Kubernetes components like Hetzner Cloud Controller Manager, Hetzner CSI Driver, Rancher System Upgrade Controller, and Cluster Autoscaler.
-- **Detailed Tutorial**: Check the [getting started](/docs/getting-started/installation) for step-by-step setup instructions.
+- **Detailed Tutorial**: Check the [getting started](getting-started/installation.md) for step-by-step setup instructions.
 
 ---
 

@@ -9,7 +9,7 @@ Securing your cluster from external threats such as excessive pings or hackers i
 ## Steps needed for Isolation
 To achieve this, we need to set up:
 
-1. [**Access/Jump Box Server:** Sits within the private network for executing commands.](./setup-access-box)
+1. [**Access/Jump Box Server:** Sits within the private network for executing commands.](./setup-access-box.md)
 2. **NAT Gateway with a Public IP:** Provides internet access and enables downloading of k3s for worker and master nodes.
 3. **Private API Load Balancer:** Manages internal traffic.
 4. **Disable Public Networking on Node IPs:** Ensures node accessibility only through the access box.
