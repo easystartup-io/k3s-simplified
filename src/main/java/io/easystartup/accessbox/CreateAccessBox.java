@@ -81,6 +81,8 @@ public class CreateAccessBox {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
+        // Todo: create firewall for access-box
+
         Server server = createServer();
 
         waitForServerToComeUp(server, ssh, mainSettings);
