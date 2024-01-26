@@ -1,6 +1,7 @@
 package io.easystartup.natgateway;
 
 import io.easystartup.cloud.hetzner.HetznerClient;
+import io.easystartup.cloud.hetzner.firewall.Firewall;
 import io.easystartup.configuration.MainSettings;
 import io.easystartup.configuration.NatGatewayConfig;
 import io.easystartup.configuration.NodePool;
@@ -74,7 +75,6 @@ public class CreateNatGateway {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
-        // Todo: create firewall for nat-gateway
         createFirewall();
 
         Server server = createServer();
@@ -91,6 +91,7 @@ public class CreateNatGateway {
     }
 
     private void createFirewall() {
+        // Todo: create firewall for nat-gateway
 
     }
 
