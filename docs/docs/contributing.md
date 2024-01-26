@@ -23,7 +23,7 @@ There are two ways to consume or contribute to this project. Since this is a sim
 ## To test release packages
 1. There is a build pipeline which creates artifact when you push to `test-release` branch
 2. You can push to that branch and check your github actions, you should be able to find the artifact to download and test where ever you want
-3. The link_to_artifact_file should be output in the last step of github action pipeline
+3. The link_to_artifact_file should be output in the `Output artifact URL` step of github action pipeline
 3. To download your modified k3s-simplified and run it just run 
     ```
     wget <link_to_your_artifact_file>
