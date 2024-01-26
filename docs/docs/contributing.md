@@ -19,3 +19,17 @@ There are two ways to consume or contribute to this project. Since this is a sim
 2. But it lead to too many issues with reflection and deserialization and I have to ensure that while running the GraalVM agent for every change that I explore all the application pathways for the agent to compute the pathways and allow reflections
 3. I do not feel it is worth the effort in doing it, mainly because of additional bugs that can come up during runtime
 4. Instead people can download a slightly larger package bundled with JRE itself which can avoid all these problems.
+
+## To test release packages
+1. There is a build pipeline which creates artifact when you push to `test-release` branch
+2. You can push to that branch and check your github actions, you should be able to find the artifact to download and test where ever you want
+3. The link_to_artifact_file should be output in the `Output artifact URL` step of github action pipeline, then you have to manually download it
+4. There is no way to download artifact without signing in, hence currently cant automate it
+3. After downloading your tar artifact  
+    ```
+    tar -xf k3s-simplified.tar.gz
+    cd k3s-simplified
+    chmod +x install.sh
+    sudo ./install.sh
+    cd ..
+    ```
