@@ -15,11 +15,17 @@ To achieve this, we need to set up:
 4. **Disable Public Networking on Node IPs:** Ensures node accessibility only through the access box.
 5. **Post-Install Routing Command:** Routes outbound access of worker and master nodes through the NAT gateway.
 
+### Setting up Access Box
+Either use the tool to create access box [here](./setup-access-box.md) or use your existing one.
+
+### Configuring a NAT Gateway
+Either use the tool to create nat gateway [here](./setup-nat-gateway.md) or use your existing one.
+
 ### Setting up the Private API Load Balancer
 Enable a private API load balancer by editing `cluster_config.yaml`:
 
 ```yaml
-private_api_load_balancer: true # Set to true for private load balancing. Ensure it's accessible from your location.
+private_api_load_balancer: true # Set to true for private load balancing. Ensure it's accessible from your access-box.
 ```
 
 ### Disabling Public Networking on Node IPs
@@ -30,11 +36,14 @@ enable_public_net_ipv4: false # Default is true. Set to false to disable IPv4 pu
 enable_public_net_ipv6: false # Default is true. Set to false to disable IPv6 public networking.
 ```
 
-### Configuring a NAT Gateway
-A detailed guide for setting up a NAT Gateway can be found here:
-[Configure NAT Gateway](https://community.hetzner.com/tutorials/how-to-set-up-nat-for-cloud-networks)
-
 ### Post-Installation Node Configuration
+
+Replace `10.0.0.1` with your private network subnet gateway. 
+
+:::info
+The gateway for `private_network_subnet: 10.0.0.0/16` is `10.0.0.1`
+:::
+
 For ARM-based images, add the following commands to `cluster_config.yaml`:
 
 ```yaml
