@@ -36,6 +36,9 @@ natGatewayConfig:
     image: 103908130
 // highlight-end
 ```
+:::info
+Currently only ubuntu 22.04 based nat-gateway can be created, because the installation scripts are only supported for it. For other env please create your own nat gateway or please help in contributing.
+:::
 
 ### 2. Run the command to create the access box
 
@@ -51,3 +54,4 @@ Setting up a nat gateway is a critical step in ensuring that your private-networ
 
 ### Helpful links
 1. [Hetzner NAT Guide](https://community.hetzner.com/tutorials/how-to-set-up-nat-for-cloud-networks)
+2. [Hetzner Network interface Guide](https://docs.hetzner.com/cloud/networks/server-configuration/#debian--ubuntu)

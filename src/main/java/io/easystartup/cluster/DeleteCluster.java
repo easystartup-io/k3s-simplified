@@ -8,11 +8,12 @@ import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
 import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.*;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -159,15 +160,6 @@ public class DeleteCluster {
     }
 
     private void findAndDeleteNetworks() {
-        io.easystartup.cloud.hetzner.network.Network nw = new io.easystartup.cloud.hetzner.network.Network(hetznerClient);
-        String existingNetworkName = mainSettings.getExistingNetworkName();
-        if (StringUtils.isNotBlank(existingNetworkName)) {
-            Network network = nw.find(existingNetworkName);
-            if (network != null) {
-                nw.delete(network.getId());
-            }
-        }
-
         deleteClusterNetwork();
     }
 
@@ -176,6 +168,13 @@ public class DeleteCluster {
         String networkName = mainSettings.getClusterName();
         Network network = nw.find(networkName);
         if (network != null) {
+            if (CollectionUtils.isNotEmpty(network.getRoutes())) {
+                Optional<Route> first = network.getRoutes().stream().filter(val -> val.getDestination().equals("0.0.0.0/0")).findFirst();
+                if (first.isPresent()) {
+                    System.out.println("Not deleting network, because it contains a route to nat gateway at " + first.get().getGateway());
+                    return;
+                }
+            }
             System.out.println("Network " + networkName + " deleted");
             nw.delete(network.getId());
         }

@@ -41,6 +41,10 @@ accessBoxConfig:
 // highlight-end
 ```
 
+:::info
+Currently only ubuntu 22.04 based access-box can be created, because the installation scripts are only supported for it. For other env please create your own access box or please help in contributing.
+:::
+
 ### 2. Run the command to create the access box
 
 ```bash
