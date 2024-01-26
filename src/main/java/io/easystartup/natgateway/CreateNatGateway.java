@@ -117,7 +117,7 @@ public class CreateNatGateway {
         map.put("private_network_setup", mainSettings.getPrivateNetworkSubnet());
         String command = TemplateUtil.renderTemplate(TemplateUtil.NAT_GATEWAY_SETUP, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), true);
         System.out.println(output);
         System.out.println("Finished doing nat-gateway setup");
     }
