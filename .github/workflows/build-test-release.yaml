@@ -42,4 +42,6 @@ jobs:
           path: "build/distributions/k3s-simplified.tar.gz"
           name: "test-release-${{ steps.version.outputs.v-version }}"
           overwrite: true
-          retention-days: 1
+          retention-days: 5
+      - name: Output artifact URL
+        run: echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
