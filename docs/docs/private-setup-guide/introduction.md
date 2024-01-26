@@ -10,10 +10,10 @@ Securing your cluster from external threats such as excessive pings or hackers i
 To achieve this, we need to set up:
 
 1. [**Access/Jump Box Server:** Sits within the private network for executing commands.](./setup-access-box.md)
-2. **NAT Gateway with a Public IP:** Provides internet access and enables downloading of k3s for worker and master nodes.
-3. **Private API Load Balancer:** Manages internal traffic.
-4. **Disable Public Networking on Node IPs:** Ensures node accessibility only through the access box.
-5. **Post-Install Routing Command:** Routes outbound access of worker and master nodes through the NAT gateway.
+2. [**NAT Gateway with a Public IP:** Provides internet access and enables downloading of k3s for worker and master nodes.](./setup-nat-gateway.md)
+3. [**Private API Load Balancer:** Manages internal traffic.](#setup-private-load-balancer)
+4. [**Disable Public Networking on Node IPs:** Ensures node accessibility only through the access box.](#disable-public-networking-on-node)
+5. [**Post-Install Routing Command:** Routes outbound access of worker and master nodes through the NAT gateway.](#post-installation-node-configuration)
 
 ### Setting up Access Box
 Either use the tool to create access box [here](./setup-access-box.md) or use your existing one.
@@ -21,14 +21,14 @@ Either use the tool to create access box [here](./setup-access-box.md) or use yo
 ### Configuring a NAT Gateway
 Either use the tool to create nat gateway [here](./setup-nat-gateway.md) or use your existing one.
 
-### Setting up the Private API Load Balancer
+### Setting up the Private API Load Balancer {#setup-private-load-balancer}
 Enable a private API load balancer by editing `cluster_config.yaml`:
 
 ```yaml
 private_api_load_balancer: true # Set to true for private load balancing. Ensure it's accessible from your access-box.
 ```
 
-### Disabling Public Networking on Node IPs
+### Disabling Public Networking on Node IPs {#disable-public-networking-on-node}
 To disable public networking, modify `cluster_config.yaml`:
 
 ```yaml
@@ -36,11 +36,11 @@ enable_public_net_ipv4: false # Default is true. Set to false to disable IPv4 pu
 enable_public_net_ipv6: false # Default is true. Set to false to disable IPv6 public networking.
 ```
 
-### Post-Installation Node Configuration
+### Post-Installation Node Configuration {#post-installation-node-configuration}
 
 Replace `10.0.0.1` with your private network subnet gateway. 
 
-:::info
+:::tip
 The gateway for `private_network_subnet: 10.0.0.0/16` is `10.0.0.1`
 :::
 
