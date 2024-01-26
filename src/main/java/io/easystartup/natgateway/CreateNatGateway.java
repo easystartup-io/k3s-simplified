@@ -48,7 +48,7 @@ public class CreateNatGateway {
         validateNatGatewaySettings(errors);
 
         if (CollectionUtils.isNotEmpty(errors)) {
-            System.out.println("INVALID ACCESS BOX SETTINGS");
+            System.out.println("INVALID NAT GATEWAY SETTINGS");
             for (String error : errors) {
                 System.out.println(error);
             }
@@ -74,7 +74,7 @@ public class CreateNatGateway {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
-        // Todo: create firewall for access-box
+        // Todo: create firewall for nat-gateway
 
         Server server = createServer();
 
@@ -82,7 +82,7 @@ public class CreateNatGateway {
 
         installItems(server);
 
-        ConsoleColors.println("\n=== Finished creating access box===\n", ConsoleColors.BLUE_BOLD);
+        ConsoleColors.println("\n=== Finished creating nat gateway===\n", ConsoleColors.BLUE_BOLD);
 
         System.out.println("""
                 The private and public keys have been copied to ~/.ssh/hetzner_rsa and ~/.ssh/hetzner_rsa.pub
@@ -171,15 +171,15 @@ public class CreateNatGateway {
     }
 
     private Server createServer() {
-        NodePool node = mainSettings.getAccessBoxConfig().getNode();
-        return createAccessBox(node);
+        NodePool node = mainSettings.getNatGatewayConfig().getNode();
+        return createNatGateway(node);
     }
 
-    private Server createAccessBox(NodePool nodePool) {
+    private Server createNatGateway(NodePool nodePool) {
         String clusterName = mainSettings.getClusterName();
         String instanceType = nodePool.getInstanceType();
-        String name = isBlank(nodePool.getName()) ? "access-box" : nodePool.getName();
-        String nodeName = String.format("%s-%s-%s-access", name, clusterName, instanceType);
+        String name = isBlank(nodePool.getName()) ? "nat-gateway" : nodePool.getName();
+        String nodeName = String.format("%s-%s-%s-nat-gateway", name, clusterName, instanceType);
         String image = isBlank(nodePool.getImage()) ? mainSettings.getImage() : nodePool.getImage();
         String[] additionalPackages = nodePool.getAdditionalPackages();
         String[] postCreateCommands = nodePool.getPostCreateCommands();
@@ -189,7 +189,7 @@ public class CreateNatGateway {
             System.out.println(ConsoleColors.GREEN + "Server " + nodeName + " already exists, skipping." + ConsoleColors.RESET);
             return server;
         }
-        System.out.println("Creating access-box server " + nodeName + "...");
+        System.out.println("Creating nat-gateway server " + nodeName + "...");
         server = hetznerClient.createServer(
                 clusterName,
                 instanceType,
@@ -206,7 +206,7 @@ public class CreateNatGateway {
                 location,
                 mainSettings.getSnapshotOs(),
                 mainSettings.getSshPort(),
-                "access-box",
+                "nat-gateway",
                 mainSettings.isDebug());
         System.out.println("...server " + nodeName + " created.");
         return server;

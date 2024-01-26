@@ -162,6 +162,30 @@ public class Main {
         }
     }
 
+    @Command(name = "create-nat-gateway", description = "# Create a nat gateway to make requests to outside from private cluster")
+    public static class CreateNatGateway implements Runnable {
+
+        @CommandLine.Option(names = {"-c", "--config"}, required = true, description = "# The path of the YAML configuration file")
+        private String config;
+
+        @Override
+        public void run() {
+            try {
+                ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
+                configurationLoader.validate();
+                for (String error : configurationLoader.getErrors()) {
+                    System.out.println(error);
+                }
+                if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                    return;
+                }
+                new io.easystartup.natgateway.CreateNatGateway(configurationLoader.getSettings(), config).initialize();
+            } catch (Throwable throwable) {
+                System.out.println(throwable.getMessage());
+            }
+        }
+    }
+
     private static void setLoggerProperties() {
         System.setProperty(SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "WARN");
         System.setProperty(SimpleLogger.SHOW_DATE_TIME_KEY, "true");
