@@ -6,6 +6,7 @@ import me.tomsdevsn.hetznercloud.objects.general.FirewallRule;
 import me.tomsdevsn.hetznercloud.objects.request.CreateFirewallRequest;
 import me.tomsdevsn.hetznercloud.objects.response.CreateFirewallResponse;
 import me.tomsdevsn.hetznercloud.objects.response.FirewallsResponse;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,22 @@ public class Firewall {
         builder.firewallRules(getFirewallRules(sshAllowedNetworks, apiAllowedNetworks, highAvailability, sshPort, privateNetworkSubnet));
         CreateFirewallResponse firewall = hetznerCloudAPI.createFirewall(builder.build());
         return firewall.getFirewall();
+    }
+
+    public me.tomsdevsn.hetznercloud.objects.general.Firewall createFirewallForNatGateway(String firewallName, String privateNetworkSubnet) {
+        CreateFirewallRequest.CreateFirewallRequestBuilder builder = CreateFirewallRequest.builder();
+        builder.name(firewallName);
+        builder.firewallRules(getFirewallRulesForNatGateway(privateNetworkSubnet));
+        CreateFirewallResponse firewall = hetznerCloudAPI.createFirewall(builder.build());
+        return firewall.getFirewall();
+    }
+
+    private List<FirewallRule> getFirewallRulesForNatGateway(String privateNetworkSubnet) {
+        List<FirewallRule> firewallRules = new ArrayList<>();
+        firewallRules.add(allowICMPPing(privateNetworkSubnet));
+        firewallRules.add(allowAllTrafficBetweenNodes(privateNetworkSubnet));
+        firewallRules.add(allowUDPBetweenNodes(privateNetworkSubnet));
+        return firewallRules;
     }
 
     public void update(Long firewallId, String[] sshAllowedNetworks, String[] apiAllowedNetworks, boolean highAvailability, int sshPort, String privateNetworkSubnet) {
@@ -75,12 +92,16 @@ public class Firewall {
         return builder.build();
     }
 
-    private FirewallRule allowICMPPing() {
+    private FirewallRule allowICMPPing(String privateNetworkSubnet) {
         FirewallRule.FirewallRuleBuilder builder = FirewallRule.builder();
         builder.description("Allow ICMP (ping)");
         builder.direction(FirewallRule.Direction.in);
         builder.protocol(FirewallRule.Protocol.icmp);
-        builder.sourceIPs(List.of("0.0.0.0/0", "::/0"));
+        List<String> sourceIPs = List.of("0.0.0.0/0", "::/0");
+        if (StringUtils.isNotBlank(privateNetworkSubnet)){
+            sourceIPs = List.of(privateNetworkSubnet);
+        }
+        builder.sourceIPs(sourceIPs);
         builder.destinationIPs(new ArrayList<>());
         return builder.build();
     }
@@ -100,7 +121,7 @@ public class Firewall {
         List<FirewallRule> firewallRules = new ArrayList<>();
 
         firewallRules.add(allowSSHPort(sshAllowedNetworks, sshPort));
-        firewallRules.add(allowICMPPing());
+        firewallRules.add(allowICMPPing(null));
         firewallRules.add(allowAllTrafficBetweenNodes(privateNetworkSubnet));
         firewallRules.add(allowUDPBetweenNodes(privateNetworkSubnet));
         if (highAvailability) {

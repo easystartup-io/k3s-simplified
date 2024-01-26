@@ -8,11 +8,7 @@ import io.easystartup.configuration.NodePool;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
 import io.easystartup.utils.TemplateUtil;
-import io.easystartup.utils.Util;
-import me.tomsdevsn.hetznercloud.objects.general.Location;
-import me.tomsdevsn.hetznercloud.objects.general.Network;
-import me.tomsdevsn.hetznercloud.objects.general.SSHKey;
-import me.tomsdevsn.hetznercloud.objects.general.Server;
+import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,6 +31,7 @@ public class CreateNatGateway {
 
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
+    me.tomsdevsn.hetznercloud.objects.general.Firewall hetznerCreatedFirewall;
 
     public CreateNatGateway(MainSettings mainSettings, String configurationFilePath) {
         this.mainSettings = mainSettings;
@@ -75,7 +72,8 @@ public class CreateNatGateway {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
-        createFirewall();
+        // Inbound requests only from inside private network
+        hetznerCreatedFirewall = createFirewall();
 
         Server server = createServer();
 
@@ -90,16 +88,30 @@ public class CreateNatGateway {
         System.out.println(String.format("Nat gateway has been created with ip %s and route has been added to the network", server.getPrivateNet().getFirst().getIp()));
     }
 
-    private void createFirewall() {
-        // Todo: create firewall for nat-gateway
-
+    private me.tomsdevsn.hetznercloud.objects.general.Firewall createFirewall() {
+        String name = "nat-gateway-" + mainSettings.getClusterName();
+        Firewall firewall = new Firewall(hetznerClient);
+        return firewall.createFirewallForNatGateway(name, mainSettings.getPrivateNetworkSubnet());
     }
 
     private void addRouteToNetwork(Server server) {
         String natGatewayIP = server.getPrivateNet().getFirst().getIp();
 
+        String destination = "0.0.0.0/0";
+        List<Route> routes = hetznerCreatedNetwork.getRoutes();
+        if (CollectionUtils.isNotEmpty(routes)) {
+            Optional<Route> first = routes.stream().filter(val -> destination.equals(val.getDestination())).findFirst();
+            if (first.isPresent() && natGatewayIP.equals(first.get().getGateway())) {
+                return;
+            } else if (first.isPresent()) {
+                System.out.println("Unable to create nat gateway");
+                System.out.println("Network already has a gateway route defined for gateway " + first.get().getGateway() + " and destination " + destination);
+                System.exit(1);
+            }
+        }
+
         io.easystartup.cloud.hetzner.network.Network network = new io.easystartup.cloud.hetzner.network.Network(hetznerClient);
-        network.addRouteToNetwork(hetznerCreatedNetwork.getId(), "0.0.0.0/0", natGatewayIP);
+        network.addRouteToNetwork(hetznerCreatedNetwork.getId(), destination, natGatewayIP);
     }
 
     private void installItems(Server server) {
@@ -183,7 +195,7 @@ public class CreateNatGateway {
                 image,
                 additionalPackages == null ? List.of() : Arrays.stream(additionalPackages).toList(),
                 postCreateCommands == null ? List.of() : Arrays.stream(postCreateCommands).toList(),
-                null,
+                hetznerCreatedFirewall,
                 hetznerCreatedNetwork,
                 hetznerCreatedSSHKey,
                 null,
