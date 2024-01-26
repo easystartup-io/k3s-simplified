@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ServerUtils {
 
-    public static void waitForServerToComeUp(Server server, SSH ssh, MainSettings mainSettings) {
+    public static void waitForServerToComeUp(Server server, SSH ssh, MainSettings mainSettings, boolean forcePrivateIP) {
         System.out.println("Waiting for successful SSH connectivity with server " + server.getName() + "...");
 
         long tic = System.currentTimeMillis();
@@ -19,7 +19,7 @@ public class ServerUtils {
                 TimeUnit.SECONDS.sleep(1); // Waiting 1 second before retry
 
                 // Implement a timeout mechanism here if necessary
-                String result = ssh.ssh(server, mainSettings.getSshPort(), "echo ready", mainSettings.isUseSSHAgent());
+                String result = ssh.ssh(server, mainSettings.getSshPort(), "echo ready", mainSettings.isUseSSHAgent(), forcePrivateIP);
 
                 if ("ready".equals(result.trim())) {
                     break; // Break the loop if the expected result is achieved

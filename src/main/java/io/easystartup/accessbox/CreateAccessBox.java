@@ -87,7 +87,7 @@ public class CreateAccessBox {
 
         Server server = createServer();
 
-        waitForServerToComeUp(server, ssh, mainSettings);
+        waitForServerToComeUp(server, ssh, mainSettings, false);
 
         installItems(server);
 
@@ -120,7 +120,7 @@ public class CreateAccessBox {
         Map<String, Object> map = new HashMap<>();
         String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_K3S_SIMPLIFIED, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(output);
         System.out.println("Finished installing k3s-simplified");
     }
@@ -132,7 +132,7 @@ public class CreateAccessBox {
         map.put("kubeconfig_path_global_env", "KUBECONFIG=${HOME}/kubeconfig");
         String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_KUBECTL, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(output);
         System.out.println("Finished installing kubectl");
     }
@@ -154,7 +154,7 @@ public class CreateAccessBox {
         map.put("public_key_path", "~/.ssh/hetzner_rsa.pub");
         String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_SSH_KEYS, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(output);
         System.out.println("Finished copying ssh keys");
     }
@@ -167,7 +167,7 @@ public class CreateAccessBox {
 
         String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_CLUSTER_CONFIG, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(output);
         System.out.println("Finished copying cluster_config.yaml");
     }

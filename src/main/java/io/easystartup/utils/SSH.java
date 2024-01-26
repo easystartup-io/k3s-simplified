@@ -33,7 +33,7 @@ public class SSH {
         this.publicKeyPath = publicKeyPath;
     }
 
-    public String ssh(Server server, int port, String command, boolean isSSHAgent) {
+    public String ssh(Server server, int port, String command, boolean isSSHAgent, boolean forcePrivateIP) {
         SshClient client = SshClient.setUpDefaultClient();
         client.setServerKeyVerifier((clientSession, socketAddress, publicKey) -> {
             // To skip known hosts check
@@ -56,7 +56,7 @@ public class SSH {
         client.start();
 
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        try (ClientSession session = openSession(client, getHostIPAdress(server), port)) {
+        try (ClientSession session = openSession(client, getHostIPAdress(server, forcePrivateIP), port)) {
             try (ByteArrayOutputStream responseStream = new ByteArrayOutputStream()) {
                 session.executeRemoteCommand(command, responseStream, errorStream, StandardCharsets.UTF_8);
                 return new String(responseStream.toByteArray()).trim();
@@ -85,7 +85,10 @@ public class SSH {
         return session;
     }
 
-    private String getHostIPAdress(Server server) {
+    private String getHostIPAdress(Server server, boolean forcePrivate) {
+        if (forcePrivate){
+            return server.getPrivateNet().get(0).getIp();
+        }
         if (server.getPublicNet() != null && server.getPublicNet().getIpv4() != null && isNotBlank(server.getPublicNet().getIpv4().getIp())) {
             return server.getPublicNet().getIpv4().getIp();
         }

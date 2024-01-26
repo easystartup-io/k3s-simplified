@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 
 import static io.easystartup.utils.ServerUtils.waitForServerToComeUp;
-import static io.easystartup.utils.Util.replaceTildaWithFullHomePath;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /*
@@ -25,22 +24,16 @@ public class CreateNatGateway {
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
 
-    private final String configurationFilePath;
-
     private final SSH ssh;
 
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
     me.tomsdevsn.hetznercloud.objects.general.Firewall hetznerCreatedFirewall;
 
-    public CreateNatGateway(MainSettings mainSettings, String configurationFilePath) {
+    public CreateNatGateway(MainSettings mainSettings) {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
         this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
-
-        configurationFilePath = replaceTildaWithFullHomePath(configurationFilePath);
-
-        this.configurationFilePath = configurationFilePath;
 
         List<String> errors = new ArrayList<>();
         validateNatGatewaySettings(errors);
@@ -77,7 +70,7 @@ public class CreateNatGateway {
 
         Server server = createServer();
 
-        waitForServerToComeUp(server, ssh, mainSettings);
+        waitForServerToComeUp(server, ssh, mainSettings, true);
 
         installItems(server);
 
@@ -124,7 +117,7 @@ public class CreateNatGateway {
         map.put("private_network_setup", mainSettings.getPrivateNetworkSubnet());
         String command = TemplateUtil.renderTemplate(TemplateUtil.NAT_GATEWAY_SETUP, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(output);
         System.out.println("Finished doing nat-gateway setup");
     }

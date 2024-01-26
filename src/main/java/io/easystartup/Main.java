@@ -180,7 +180,7 @@ public class Main {
                 if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
                     return;
                 }
-                new io.easystartup.natgateway.CreateNatGateway(configurationLoader.getSettings(), config).initialize();
+                new io.easystartup.natgateway.CreateNatGateway(configurationLoader.getSettings()).initialize();
             } catch (Throwable throwable) {
                 System.out.println(throwable.getMessage());
             }

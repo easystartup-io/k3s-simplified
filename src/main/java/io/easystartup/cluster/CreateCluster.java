@@ -7,7 +7,6 @@ import io.easystartup.configuration.NodePool;
 import io.easystartup.kubernetes.KubernetesInstaller;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
-import io.easystartup.utils.Util;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
@@ -336,7 +335,7 @@ public class CreateCluster {
         for (Map.Entry<ServerType, List<Server>> serverTypeListEntry : serverMap.entrySet()) {
             List<Server> value = serverTypeListEntry.getValue();
             for (Server server : value) {
-                waitForServerToComeUp(server, ssh, mainSettings);
+                waitForServerToComeUp(server, ssh, mainSettings, false);
             }
         }
     }

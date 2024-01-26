@@ -48,3 +48,6 @@ It will give you the output of the ip to your nat gateway. And then you can add 
 ### Conclusion
 
 Setting up a nat gateway is a critical step in ensuring that your private-network only client servers (master and worker k8s nodes) are able to access the public internal urls. This is required to be able to download and upgrade k3s, download images from public registry as well as for any kubernetes applications which need to access outside urls.
+
+### Helpful links
+1. [Hetzner NAT Guide](https://community.hetzner.com/tutorials/how-to-set-up-nat-for-cloud-networks)

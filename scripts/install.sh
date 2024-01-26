@@ -42,7 +42,7 @@ if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     echo "Java is already installed."
 else
     echo "Downloading Eclipse JRE 21..."
-    wget -O openjre-21.tar.gz $DOWNLOAD_URL
+    wget -O --backups=0 openjre-21.tar.gz $DOWNLOAD_URL
 
     mkdir -p bundled-jre
 

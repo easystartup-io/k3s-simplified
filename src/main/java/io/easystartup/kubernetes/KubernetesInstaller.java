@@ -134,7 +134,7 @@ public class KubernetesInstaller {
 
         String command = masterInstallScript(firstMaster, clusterDoingInit, k3sTokenByFallingBackToDifferentMasters);
         printDebug(command);
-        String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String output = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
 
         System.out.println(output);
         System.out.println("Waiting for the control plane to be ready...");
@@ -151,7 +151,7 @@ public class KubernetesInstaller {
         String command = "cat /etc/rancher/k3s/k3s.yaml";
 
         // Execute the command via SSH and store the output (kubeconfig content)
-        String kubeconfigContent = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String kubeconfigContent = ssh.ssh(firstMaster, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
 
         String apiServerHostname = isNotBlank(mainSettings.getAPIServerHostname()) ? mainSettings.getAPIServerHostname() : getApiServerIpAddress();
         // Replace the server address placeholder with the actual API server address
@@ -236,14 +236,14 @@ public class KubernetesInstaller {
         System.out.println("Deploying k3s to master " + master.getName() + "...");
         String command = masterInstallScript(master, false, k3sTokenByFallingBackToDifferentMasters);
         printDebug(master.getName() + "\n" + command);
-        String ssh1 = ssh.ssh(master, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+        String ssh1 = ssh.ssh(master, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
         System.out.println(master.getName() + "\n" + ssh1);
         System.out.println("...k3s has been deployed to master " + master.getName() + ".");
     }
 
     private void deployK3sToWorker(Server worker, String k3sToken) {
         System.out.println("Deploying k3s to worker " + worker.getName() + "...");
-        ssh.ssh(worker, mainSettings.getSshPort(), workerInstallScript(k3sToken), mainSettings.isUseSSHAgent());
+        ssh.ssh(worker, mainSettings.getSshPort(), workerInstallScript(k3sToken), mainSettings.isUseSSHAgent(), false);
         System.out.println("...k3s has been deployed to worker " + worker.getName() + ".");
     }
 
@@ -527,7 +527,7 @@ public class KubernetesInstaller {
 
     private String checkCertificatePath(Server firstMaster) {
         String checkCommand = "[ -f /etc/ssl/certs/ca-certificates.crt ] && echo 1 || echo 2";
-        String result = ssh.ssh(firstMaster, mainSettings.getSshPort(), checkCommand, mainSettings.isUseSSHAgent());
+        String result = ssh.ssh(firstMaster, mainSettings.getSshPort(), checkCommand, mainSettings.isUseSSHAgent(), false);
 
         if ("1".equals(result.trim())) {
             return "/etc/ssl/certs/ca-certificates.crt";
@@ -681,7 +681,7 @@ public class KubernetesInstaller {
         int index = 0;
         for (Server server : serverList) {
             String command = "cat /var/lib/rancher/k3s/server/node-token";
-            token = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
+            token = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent(), false);
             if (StringUtils.isNotBlank(token)) {
                 masterServerWithToken = server;
                 masterServerIndex = index;
