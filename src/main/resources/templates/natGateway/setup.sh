@@ -1,21 +1,20 @@
-# Detect OS and Architecture
-OS=$(uname -s)
-ARCH=$(uname -m)
+apt update && apt upgrade -y
+apt install ifupdown
 
-echo "Detected OS: $OS, Architecture: $ARCH"
+# runtime setup (not persistent)
+echo 1 > /proc/sys/net/ipv4/ip_forward
+iptables -t nat -A POSTROUTING -s '{{ private_network_subnet }}' -o eth0 -j MASQUERADE
+# ----
 
-if [ "$OS" = "Linux" ] && [ "$ARCH" = "aarch64" ]; then
-    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
-elif [ "$OS" = "Linux" ] && [ ! "$ARCH" = "aarch64" ]; then
-    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-else
-    echo "Unsupported OS or Architecture"
-    exit 1
-fi
+# making it persistent
 
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+touch /etc/network/interfaces
 
-# Add the kubeconfig file to end of /etc/environment so that kubectl will directly pick up that file
-# https://github.com/kubernetes/kubernetes/issues/7339
+tee -a /etc/network/interfaces <<EOF
+auto eth0
+iface eth0 inet dhcp
+    post-up echo 1 > /proc/sys/net/ipv4/ip_forward
+    post-up iptables -t nat -A POSTROUTING -s '{{ private_network_subnet }}' -o eth0 -j MASQUERADE
+EOF
 
-sudo echo -e "{{ kubeconfig_path_global_env }}" >> /etc/environment
+# ----

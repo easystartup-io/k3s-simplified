@@ -64,6 +64,26 @@ public class ConfigurationLoader {
         serverTypes = fullServerTypes.keySet();
 
         populateArchitecturesInWorkerNodePools(fullServerTypes);
+        populateArchitecturesInNatGatewayNode(fullServerTypes);
+    }
+
+    private void populateArchitecturesInNatGatewayNode(Map<String, ServerType> fullServerTypes) {
+        NatGatewayConfig natGatewayConfig = settings.getNatGatewayConfig();
+        if (natGatewayConfig == null || natGatewayConfig.getNode() == null || natGatewayConfig.getNode().getInstanceCount() == 0) {
+            return;
+        }
+        String instanceType = natGatewayConfig.getNode().getInstanceType();
+        ServerType serverType = fullServerTypes.get(instanceType);
+        if (serverType == null || serverType.getArchitecture() == null) {
+            return;
+        }
+        NodePool.Architecture architecture = null;
+        if (serverType.getArchitecture() == Architecture.arm) {
+            architecture = NodePool.Architecture.arm64;
+        } else if (serverType.getArchitecture() == Architecture.x86) {
+            architecture = NodePool.Architecture.x86;
+        }
+        natGatewayConfig.getNode().setArchitecture(architecture);
     }
 
     private void populateArchitecturesInWorkerNodePools(Map<String, ServerType> fullServerTypes) {

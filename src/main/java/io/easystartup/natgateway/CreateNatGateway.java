@@ -75,6 +75,7 @@ public class CreateNatGateway {
         hetznerCreatedSSHKey = createSSH();
 
         // Todo: create firewall for nat-gateway
+        createFirewall();
 
         Server server = createServer();
 
@@ -82,21 +83,22 @@ public class CreateNatGateway {
 
         installItems(server);
 
+        addRouteToNetwork(server);
+
         ConsoleColors.println("\n=== Finished creating nat gateway===\n", ConsoleColors.BLUE_BOLD);
 
-        System.out.println("""
-                The private and public keys have been copied to ~/.ssh/hetzner_rsa and ~/.ssh/hetzner_rsa.pub
-                The cloud_config.yaml has also been copied to the root directory and the ssh_key paths replaced accordingly in the cluster_config.yaml
-                And the hetzner token has been copied and set in the file itself
-                And the kubeconfig path has changed to './kubeconfig' in the cluster_config.yaml
-                """);
+        System.out.println(String.format("Nat gateway has been created with ip %s and route has been added to the network", server.getPrivateNet().getFirst().getIp()));
+    }
 
-        System.out.println(getConfigureNatGatewaySettings(server));
+    private void createFirewall() {
 
-        System.out.println("""
-                And after connecting just run 
-                k3s-simplified create --config cluster_config.yaml
-                """);
+    }
+
+    private void addRouteToNetwork(Server server) {
+        String natGatewayIP = server.getPrivateNet().getFirst().getIp();
+
+        io.easystartup.cloud.hetzner.network.Network network = new io.easystartup.cloud.hetzner.network.Network(hetznerClient);
+        network.addRouteToNetwork(hetznerCreatedNetwork.getId(), "0.0.0.0/0", natGatewayIP);
     }
 
     private void installItems(Server server) {
@@ -106,29 +108,12 @@ public class CreateNatGateway {
     private void doBasicSetup(Server server) {
         System.out.println("Doing nat gateway setup");
         Map<String, Object> map = new HashMap<>();
+        map.put("private_network_setup", mainSettings.getPrivateNetworkSubnet());
         String command = TemplateUtil.renderTemplate(TemplateUtil.NAT_GATEWAY_SETUP, map);
 
         String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
         System.out.println(output);
         System.out.println("Finished doing nat-gateway setup");
-    }
-
-
-    private String getConfigureNatGatewaySettings(Server server) {
-        String privateSSHKeyPath = Util.replaceFullHomePathWithTilda(mainSettings.getPrivateSSHKeyPath());
-        if (mainSettings.getSshPort() != 22) {
-            return String.format("""
-                    To connect to nat gateway box run this command,
-                                    
-                    ssh root@%s -p %s -i %s
-                    """, server.getPublicNet().getIpv4().getIp(), mainSettings.getSshPort(), privateSSHKeyPath);
-        } else {
-            return String.format("""
-                    To connect to nat gateway box run this command,
-                                    
-                    ssh root@%s -i %s
-                    """, server.getPublicNet().getIpv4().getIp(), privateSSHKeyPath);
-        }
     }
 
     private Network findOrCreateNetwork() {

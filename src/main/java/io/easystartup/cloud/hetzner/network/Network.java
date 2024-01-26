@@ -5,6 +5,8 @@ import me.tomsdevsn.hetznercloud.HetznerCloudAPI;
 import me.tomsdevsn.hetznercloud.objects.enums.SubnetType;
 import me.tomsdevsn.hetznercloud.objects.general.Subnet;
 import me.tomsdevsn.hetznercloud.objects.request.CreateNetworkRequest;
+import me.tomsdevsn.hetznercloud.objects.request.NetworkRouteRequest;
+import me.tomsdevsn.hetznercloud.objects.response.ActionResponse;
 import me.tomsdevsn.hetznercloud.objects.response.NetworkResponse;
 import me.tomsdevsn.hetznercloud.objects.response.NetworksResponse;
 
@@ -40,6 +42,14 @@ public class Network {
         builder.subnets(List.of(subnet));
         NetworkResponse network = hetznerCloudAPI.createNetwork(builder.build());
         return network.getNetwork();
+    }
+
+    public void addRouteToNetwork(long id, String destination, String gateway) {
+        NetworkRouteRequest.NetworkRouteRequestBuilder builder = NetworkRouteRequest.builder();
+        builder.destination(destination);
+        builder.gateway(gateway);
+        ActionResponse actionResponse = hetznerCloudAPI.addRouteToNetwork(id, builder.build());
+        actionResponse.getAction();
     }
 
 
