@@ -145,6 +145,7 @@ public class MainSettings {
     private boolean debug;
 
     private AccessBoxConfig accessBoxConfig;
+    private NatGatewayConfig natGatewayConfig;
     public String getHetznerToken() {
         return hetznerToken;
     }
@@ -548,5 +549,13 @@ public class MainSettings {
 
     public void setAccessBoxConfig(AccessBoxConfig accessBoxConfig) {
         this.accessBoxConfig = accessBoxConfig;
+    }
+
+    public NatGatewayConfig getNatGatewayConfig() {
+        return natGatewayConfig;
+    }
+
+    public void setNatGatewayConfig(NatGatewayConfig natGatewayConfig) {
+        this.natGatewayConfig = natGatewayConfig;
     }
 }

@@ -1,8 +1,8 @@
-package io.easystartup.accessbox;
+package io.easystartup.natgateway;
 
 import io.easystartup.cloud.hetzner.HetznerClient;
-import io.easystartup.configuration.AccessBoxConfig;
 import io.easystartup.configuration.MainSettings;
+import io.easystartup.configuration.NatGatewayConfig;
 import io.easystartup.configuration.NodePool;
 import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
@@ -13,16 +13,9 @@ import me.tomsdevsn.hetznercloud.objects.general.Network;
 import me.tomsdevsn.hetznercloud.objects.general.SSHKey;
 import me.tomsdevsn.hetznercloud.objects.general.Server;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static io.easystartup.utils.ServerUtils.waitForServerToComeUp;
 import static io.easystartup.utils.Util.replaceTildaWithFullHomePath;
@@ -31,8 +24,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 /*
  * @author indianBond
  */
-public class CreateAccessBox {
-
+public class CreateNatGateway {
     private final MainSettings mainSettings;
     private final HetznerClient hetznerClient;
 
@@ -43,7 +35,7 @@ public class CreateAccessBox {
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
 
-    public CreateAccessBox(MainSettings mainSettings, String configurationFilePath) {
+    public CreateNatGateway(MainSettings mainSettings, String configurationFilePath) {
         this.mainSettings = mainSettings;
         this.hetznerClient = new HetznerClient(mainSettings.getHetznerToken());
         this.ssh = new SSH(mainSettings.getPrivateSSHKeyPath(), mainSettings.getPublicSSHKeyPath());
@@ -52,9 +44,8 @@ public class CreateAccessBox {
 
         this.configurationFilePath = configurationFilePath;
 
-
         List<String> errors = new ArrayList<>();
-        validateAccessBoxSettings(errors);
+        validateNatGatewaySettings(errors);
 
         if (CollectionUtils.isNotEmpty(errors)) {
             System.out.println("INVALID ACCESS BOX SETTINGS");
@@ -66,20 +57,20 @@ public class CreateAccessBox {
 
     }
 
-    private void validateAccessBoxSettings(List<String> errors) {
-        if (mainSettings.getAccessBoxConfig() == null) {
-            errors.add("No access box config present!");
+    private void validateNatGatewaySettings(List<String> errors) {
+        if (mainSettings.getNatGatewayConfig() == null) {
+            errors.add("No nat gateway config present!");
             return;
         }
-        AccessBoxConfig accessBoxConfig = mainSettings.getAccessBoxConfig();
-        if (accessBoxConfig.getNode() == null) {
-            errors.add("No access box node config present!");
+        NatGatewayConfig natGatewayConfigConfig = mainSettings.getNatGatewayConfig();
+        if (natGatewayConfigConfig.getNode() == null) {
+            errors.add("No nat gateway node config present!");
             return;
         }
     }
 
     public void initialize() {
-        ConsoleColors.println("\n=== Creating access box===\n", ConsoleColors.BLUE_BOLD);
+        ConsoleColors.println("\n=== Creating nat gateway===\n", ConsoleColors.BLUE_BOLD);
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
@@ -100,7 +91,7 @@ public class CreateAccessBox {
                 And the kubeconfig path has changed to './kubeconfig' in the cluster_config.yaml
                 """);
 
-        System.out.println(getConnectToAccessBoxText(server));
+        System.out.println(getConfigureNatGatewaySettings(server));
 
         System.out.println("""
                 And after connecting just run 
@@ -109,133 +100,31 @@ public class CreateAccessBox {
     }
 
     private void installItems(Server server) {
-        copyKeys(server);
-        copyClusterConfig(server);
-        installK3sSimplified(server);
-        installKubectl(server);
+        doBasicSetup(server);
     }
 
-    private void installK3sSimplified(Server server) {
-        System.out.println("Installing k3s-simplified");
+    private void doBasicSetup(Server server) {
+        System.out.println("Doing nat gateway setup");
         Map<String, Object> map = new HashMap<>();
-        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_K3S_SIMPLIFIED, map);
+        String command = TemplateUtil.renderTemplate(TemplateUtil.NAT_GATEWAY_SETUP, map);
 
         String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
         System.out.println(output);
-        System.out.println("Finished installing k3s-simplified");
+        System.out.println("Finished doing nat-gateway setup");
     }
 
-    private void installKubectl(Server server) {
-        System.out.println("Installing kubectl");
-        Map<String, Object> map = new HashMap<>();
-        // https://github.com/kubernetes/kubernetes/issues/7339
-        map.put("kubeconfig_path_global_env", "KUBECONFIG=${HOME}/kubeconfig");
-        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_INSTALL_KUBECTL, map);
 
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
-        System.out.println(output);
-        System.out.println("Finished installing kubectl");
-    }
-
-    /**
-     * echo '{{ private_key }}' > '{{ private_key_path }}'
-     * <p>
-     * echo '{{ public_key }}' > '{{ public_key_path }}'
-     * <p>
-     * echo '{{ cluster_config }}' > '{{ cluster_config_path }}'
-     */
-
-    private void copyKeys(Server server) {
-        System.out.println("Copying ssh keys to access box");
-        Map<String, Object> map = new HashMap<>();
-        map.put("private_key", getPrivateKeyFromFile());
-        map.put("private_key_path", "~/.ssh/hetzner_rsa");
-        map.put("public_key", getPublicKeyFromFile());
-        map.put("public_key_path", "~/.ssh/hetzner_rsa.pub");
-        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_SSH_KEYS, map);
-
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
-        System.out.println(output);
-        System.out.println("Finished copying ssh keys");
-    }
-
-    private void copyClusterConfig(Server server) {
-        System.out.println("Copying cluster_config.yaml to access box");
-        Map<String, Object> map = new HashMap<>();
-        map.put("cluster_config", getModifiedClusterConfig());
-        map.put("cluster_config_path", "~/cluster_config.yaml");
-
-        String command = TemplateUtil.renderTemplate(TemplateUtil.ACCESS_BOX_COPY_CLUSTER_CONFIG, map);
-
-        String output = ssh.ssh(server, mainSettings.getSshPort(), command, mainSettings.isUseSSHAgent());
-        System.out.println(output);
-        System.out.println("Finished copying cluster_config.yaml");
-    }
-
-    private String getPublicKeyFromFile() {
-        String publicSSHKeyPath = mainSettings.getPublicSSHKeyPath();
-        try {
-            return IOUtils.toString(new FileInputStream(publicSSHKeyPath));
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }
-
-    private String getPrivateKeyFromFile() {
-        String privateSSHKeyPath = mainSettings.getPrivateSSHKeyPath();
-        try {
-            return IOUtils.toString(new FileInputStream(privateSSHKeyPath));
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }
-
-    private String getModifiedClusterConfig() {
-        String path = replaceTildaWithFullHomePath(configurationFilePath);
-
-        String content = null;
-        try {
-            content = new String(Files.readAllBytes(Paths.get(path)));
-            content = replaceOrAddYamlValue(content, "kubeconfig_path", "\"./kubeconfig\"");
-            content = replaceOrAddYamlValue(content, "public_ssh_key_path", "\"~/.ssh/hetzner_rsa.pub\"");
-            content = replaceOrAddYamlValue(content, "private_ssh_key_path", "\"~/.ssh/hetzner_rsa\"");
-            content = replaceOrAddYamlValue(content, "hetzner_token", "\"" + mainSettings.getHetznerToken() + "\"");
-            content = replaceOrAddYamlValue(content, "use_ssh_agent", "false");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        return content;
-    }
-
-    private String replaceOrAddYamlValue(String content, String key, String value) {
-        // Check if the key is already present
-        String patternString = "(?m)^(" + Pattern.quote(key) + ": ).*$";
-        Pattern pattern = Pattern.compile(patternString);
-        Matcher matcher = pattern.matcher(content);
-
-        if (matcher.find()) {
-            // If key is present, replace its value
-            return matcher.replaceAll("$1" + value);
-        } else {
-            // If key is not present, append the key-value pair
-            return content + "\n" + key + ": " + value;
-        }
-    }
-
-    private String getConnectToAccessBoxText(Server server) {
+    private String getConfigureNatGatewaySettings(Server server) {
         String privateSSHKeyPath = Util.replaceFullHomePathWithTilda(mainSettings.getPrivateSSHKeyPath());
         if (mainSettings.getSshPort() != 22) {
             return String.format("""
-                    To connect to access box run this command,
+                    To connect to nat gateway box run this command,
                                     
                     ssh root@%s -p %s -i %s
                     """, server.getPublicNet().getIpv4().getIp(), mainSettings.getSshPort(), privateSSHKeyPath);
         } else {
             return String.format("""
-                    To connect to access box run this command,
+                    To connect to nat gateway box run this command,
                                     
                     ssh root@%s -i %s
                     """, server.getPublicNet().getIpv4().getIp(), privateSSHKeyPath);
@@ -322,4 +211,5 @@ public class CreateAccessBox {
         System.out.println("...server " + nodeName + " created.");
         return server;
     }
+
 }

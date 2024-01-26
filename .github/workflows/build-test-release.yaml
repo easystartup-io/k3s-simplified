@@ -1,0 +1,45 @@
+name: Create test release artifact
+run-name: Deploy to test release by @${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - test-release
+
+concurrency:
+  group: ${{ github.workflow }}-test-release
+  cancel-in-progress: true
+
+jobs:
+  build_release:
+    name: Publish test zip
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Get next version
+        uses: reecetech/version-increment@2023.9.3
+        id: version
+        with:
+          scheme: calver
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "version.*"
+          replace: "version=${{ steps.version.outputs.v-version }}"
+          regex: true
+          include: "src/main/resources/version.properties"
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'oracle'
+      - run: ./gradlew clean createTar --no-daemon
+      - name: Publish new test release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: "build/distributions/k3s-simplified.tar.gz"
+          name: "test-release-${{ steps.version.outputs.v-version }}"
+          overwrite: true
+          retention-days: 1
