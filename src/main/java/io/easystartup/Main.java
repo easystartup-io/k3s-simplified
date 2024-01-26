@@ -38,7 +38,8 @@ public class Main {
                     DeleteCluster.class,
                     UpgradeCluster.class,
                     ListK3sReleases.class,
-                    CreateAccessBox.class
+                    CreateAccessBox.class,
+                    CreateNatGateway.class,
             }
     )
     public static class K3sSimplifier implements Callable<Integer> {
