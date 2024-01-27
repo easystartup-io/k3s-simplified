@@ -5,7 +5,7 @@ sidebar_position: 2
 # Setup Access / Jump box
 
 :::info
-Skip this step if you have already setup access box.
+Skip this step if you have already setup access box. And add it to your network.
 :::
 
 ## What is an Access Box?

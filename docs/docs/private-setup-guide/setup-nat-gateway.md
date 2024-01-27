@@ -5,7 +5,7 @@ sidebar_position: 3
 # Setup Nat gateway
 
 :::info
-Skip this step if you have already setup nat gateway.
+Skip this step if you have already setup nat gateway. And add it to your private network.
 :::
 
 ## What is a Nat Gateway?
