@@ -656,6 +656,7 @@ public class KubernetesInstaller {
         map.put("k3s_version", mainSettings.getK3SVersion());
         map.put("k3s_token", k3sTokenByFallingBackToDifferentMasters);
         map.put("disable_flannel", String.valueOf(mainSettings.getDisableFlannel()));
+        map.put("disable_kube_proxy", String.valueOf(mainSettings.isDisableKubeProxy()));
         map.put("flannel_backend", flannelBackend);
         map.put("taint", taint);
         map.put("extra_args", extraArgs);

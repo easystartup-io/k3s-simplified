@@ -117,6 +117,9 @@ public class MainSettings {
     @JsonProperty("disable_flannel")
     private boolean disableFlannel;
 
+    @JsonProperty("disable_kube_proxy")
+    private boolean disableKubeProxy;
+
     @JsonProperty("schedule_workloads_on_masters")
     private boolean scheduleWorkloadsOnMasters;
 
@@ -557,5 +560,13 @@ public class MainSettings {
 
     public void setNatGatewayConfig(NatGatewayConfig natGatewayConfig) {
         this.natGatewayConfig = natGatewayConfig;
+    }
+
+    public boolean isDisableKubeProxy() {
+        return disableKubeProxy;
+    }
+
+    public void setDisableKubeProxy(boolean disableKubeProxy) {
+        this.disableKubeProxy = disableKubeProxy;
     }
 }
