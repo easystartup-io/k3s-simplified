@@ -38,7 +38,7 @@ public class DeleteCluster {
     public void deleteCluster() {
         System.out.println(ConsoleColors.BLUE_BOLD + "\n=== Deleting infrastructure resources ===\n" + ConsoleColors.RESET);
         deleteLoadBalancer();
-        // Todo: try to do in parallel
+
         deleteServers(serverMap);
         findAndDeleteNetworks();
         // Need to delete firewall in the end because it does not allow to delete unless all servers are deleted

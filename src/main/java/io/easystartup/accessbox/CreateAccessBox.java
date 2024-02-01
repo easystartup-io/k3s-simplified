@@ -8,10 +8,7 @@ import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.SSH;
 import io.easystartup.utils.TemplateUtil;
 import io.easystartup.utils.Util;
-import me.tomsdevsn.hetznercloud.objects.general.Location;
-import me.tomsdevsn.hetznercloud.objects.general.Network;
-import me.tomsdevsn.hetznercloud.objects.general.SSHKey;
-import me.tomsdevsn.hetznercloud.objects.general.Server;
+import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +39,7 @@ public class CreateAccessBox {
 
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
+    private Firewall hetznerCreatedFirewall;
 
     public CreateAccessBox(MainSettings mainSettings, String configurationFilePath) {
         this.mainSettings = mainSettings;
@@ -83,7 +81,7 @@ public class CreateAccessBox {
         hetznerCreatedNetwork = findOrCreateNetwork();
         hetznerCreatedSSHKey = createSSH();
 
-        // Todo: create firewall for access-box
+        hetznerCreatedFirewall = createFirewall();
 
         Server server = createServer();
 
@@ -106,6 +104,12 @@ public class CreateAccessBox {
                 And after connecting just run 
                 k3s-simplified create --config cluster_config.yaml
                 """);
+    }
+
+    private me.tomsdevsn.hetznercloud.objects.general.Firewall createFirewall() {
+        String name = "access-box-" + mainSettings.getClusterName();
+        io.easystartup.cloud.hetzner.firewall.Firewall firewall = new io.easystartup.cloud.hetzner.firewall.Firewall(hetznerClient);
+        return firewall.createFirewallForAccessBox(name, mainSettings.getPrivateNetworkSubnet(), mainSettings.getSSHAllowedNetworks(), mainSettings.getSshPort());
     }
 
     private void installItems(Server server) {
@@ -308,7 +312,7 @@ public class CreateAccessBox {
                 image,
                 additionalPackages == null ? List.of() : Arrays.stream(additionalPackages).toList(),
                 postCreateCommands == null ? List.of() : Arrays.stream(postCreateCommands).toList(),
-                null,
+                hetznerCreatedFirewall,
                 hetznerCreatedNetwork,
                 hetznerCreatedSSHKey,
                 null,

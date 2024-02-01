@@ -28,7 +28,7 @@ public class CreateNatGateway {
 
     private Network hetznerCreatedNetwork;
     private SSHKey hetznerCreatedSSHKey;
-    me.tomsdevsn.hetznercloud.objects.general.Firewall hetznerCreatedFirewall;
+    private me.tomsdevsn.hetznercloud.objects.general.Firewall hetznerCreatedFirewall;
 
     public CreateNatGateway(MainSettings mainSettings) {
         this.mainSettings = mainSettings;

@@ -541,37 +541,37 @@ public class KubernetesInstaller {
         KeyValuePair[] labels = mainSettings.getMastersPool().getLabels();
         KeyValuePair[] taints = mainSettings.getMastersPool().getTaints();
 
-        //Todo: Dont make multiple requests, single request should handle for all masters
-        for (Server master : masters) {
-            applyLabels(master.getName(), labels);
-            applyTaints(master.getName(), taints);
-        }
+        String nodeNames = masters.stream().map(Server::getName).collect(Collectors.joining(" "));
+        applyLabels(nodeNames, labels);
+        applyTaints(nodeNames, taints);
     }
 
-    private void applyLabels(String nodeName, KeyValuePair[] labels) {
+    private void applyLabels(String nodeNames, KeyValuePair[] labels) {
         if (labels == null || labels.length == 0) {
             return;
         }
         String labelString = Arrays.stream(labels)
                 .map(label -> label.getKey() + "=" + label.getValue())
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining(" "));
         if (!labelString.isEmpty()) {
-            System.out.println("Adding label to " + nodeName);
-            String command = "kubectl label nodes " + nodeName + " " + labelString + " --overwrite";
+            System.out.println("Adding label to " + nodeNames);
+            String command = "kubectl label --overwrite nodes " + nodeNames + " " + labelString;
             ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
         }
     }
 
-    private void applyTaints(String nodeName, KeyValuePair[] taints) {
+    private void applyTaints(String nodeNames, KeyValuePair[] taints) {
         if (taints == null || taints.length == 0) {
             return;
         }
-        Arrays.stream(taints).forEach(taint -> {
-            System.out.println("Adding taint to " + nodeName);
-            String taintString = taint.getKey() + "=" + taint.getValue();
-            String command = "kubectl taint nodes " + nodeName + " " + taintString + " --overwrite";
+        String taintString = Arrays.stream(taints)
+                .map(taint -> taint.getKey() + "=" + taint.getValue())
+                .collect(Collectors.joining(" "));
+        if (StringUtils.isNotBlank(taintString)) {
+            System.out.println("Adding taint to " + nodeNames);
+            String command = "kubectl taint --overwrite nodes " + nodeNames + " " + taintString;
             ShellUtil.run(command, mainSettings.getKubeconfigPath(), mainSettings.getHetznerToken());
-        });
+        }
     }
 
     private void addLabelsAndTaintsToWorkers() {

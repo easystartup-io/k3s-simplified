@@ -4,6 +4,9 @@ node_modules
 .yarn
 package-lock.json
 
+# Dont' persist config
+cluster_config.yaml
+
 # Production
 /build
 

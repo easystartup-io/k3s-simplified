@@ -38,12 +38,29 @@ public class Firewall {
         return firewall.getFirewall();
     }
 
+    public me.tomsdevsn.hetznercloud.objects.general.Firewall createFirewallForAccessBox(String firewallName, String privateNetworkSubnet, String[] sshAllowedNetworks, int sshPort) {
+        CreateFirewallRequest.CreateFirewallRequestBuilder builder = CreateFirewallRequest.builder();
+        builder.name(firewallName);
+        builder.firewallRules(getFirewallRulesForAccessBox(privateNetworkSubnet, sshAllowedNetworks, sshPort));
+        CreateFirewallResponse firewall = hetznerCloudAPI.createFirewall(builder.build());
+        return firewall.getFirewall();
+    }
+
     public me.tomsdevsn.hetznercloud.objects.general.Firewall createFirewallForNatGateway(String firewallName, String privateNetworkSubnet) {
         CreateFirewallRequest.CreateFirewallRequestBuilder builder = CreateFirewallRequest.builder();
         builder.name(firewallName);
         builder.firewallRules(getFirewallRulesForNatGateway(privateNetworkSubnet));
         CreateFirewallResponse firewall = hetznerCloudAPI.createFirewall(builder.build());
         return firewall.getFirewall();
+    }
+
+    private List<FirewallRule> getFirewallRulesForAccessBox(String privateNetworkSubnet, String[] sshAllowedNetworks, int sshPort) {
+        List<FirewallRule> firewallRules = new ArrayList<>();
+        firewallRules.add(allowICMPPing(privateNetworkSubnet));
+        firewallRules.add(allowAllTrafficBetweenNodes(privateNetworkSubnet));
+        firewallRules.add(allowUDPBetweenNodes(privateNetworkSubnet));
+        firewallRules.add(allowSSHPort(sshAllowedNetworks, sshPort));
+        return firewallRules;
     }
 
     private List<FirewallRule> getFirewallRulesForNatGateway(String privateNetworkSubnet) {

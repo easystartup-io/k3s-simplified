@@ -12,7 +12,7 @@ There are two ways to consume or contribute to this project. Since this is a sim
 
 ## After setup is done, how to run locally
 1. ```./gradlew clean build```
-2. ```java -jar build/libs/k3s-simplified-<version>.jar create --config ~/Projects/easystartup-io/k3s-simplified/cluster_config.yaml```
+2. ```java -jar build/libs/k3s-simplified.jar create --config ~/Projects/easystartup-io/k3s-simplified/cluster_config.yaml```
 
 ## Why am I not using GraalVM native image:
 1. I did explore using a GraalVM native image

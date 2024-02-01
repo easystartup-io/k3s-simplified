@@ -10,12 +10,8 @@ import io.easystartup.utils.SSH;
 import me.tomsdevsn.hetznercloud.objects.general.*;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static io.easystartup.utils.ServerUtils.waitForServerToComeUp;
 import static io.easystartup.utils.Util.sleep;
@@ -45,6 +41,8 @@ public class CreateCluster {
     private SSHKey sshKey;
 
     private final SSH ssh;
+    private final ExecutorService VIRTUAL_THREAD_PER_TASK_EXECUTOR = Executors.newVirtualThreadPerTaskExecutor();
+    private static final int MAX_API_CALL_CONCURRENCY = 5;
 
     public CreateCluster(MainSettings mainSettings) {
         this.mainSettings = mainSettings;
@@ -58,7 +56,6 @@ public class CreateCluster {
         firewall = createFirewall();
         sshKey = createSSH();
 
-        // Todo: try to do in parallel
         createServers(serverMap);
         loadBalancer = createLoadBalancer();
 
@@ -133,13 +130,32 @@ public class CreateCluster {
                 .filter(nodePool -> !(nodePool.getAutoScaling() != null && nodePool.getAutoScaling().isEnabled()))
                 .toList();
 
+        Semaphore semaphore = new Semaphore(MAX_API_CALL_CONCURRENCY);
+        List<Future<Server>> futures = new ArrayList<>();
         for (NodePool nodePool : noAutoscalingWorkerNodePools) {
             List<PlacementGroup> placementGroups = createPlacementGroupsForNodePool(nodePool);
             for (int index = 0; index < nodePool.getInstanceCount(); index++) {
                 PlacementGroup placementGroup = placementGroups.get(index % placementGroups.size());
-                Server serverCreator = createWorkerServer(index, nodePool, placementGroup);
-                serverList.add(serverCreator);
+                int finalIndex = index;
+                executeInsideSemaphore(semaphore, () -> {
+                    Future<Server> submit = VIRTUAL_THREAD_PER_TASK_EXECUTOR.submit(() ->
+                            createWorkerServer(finalIndex, nodePool, placementGroup)
+                    );
+                    futures.add(submit);
+                });
             }
+        }
+        waitAndAddToServerList(serverList, futures);
+    }
+
+    private void executeInsideSemaphore(Semaphore semaphore, Runnable runnable) {
+        try {
+            semaphore.acquire();
+            runnable.run();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            semaphore.release();
         }
     }
 
@@ -198,11 +214,26 @@ public class CreateCluster {
         String placementGroupName = mainSettings.getClusterName() + "-masters";
         PlacementGroup placementGroup = createPlacementGroup(placementGroupName);
 
+        Semaphore semaphore = new Semaphore(MAX_API_CALL_CONCURRENCY);
+
         long instanceCount = mainSettings.getMastersPool().getInstanceCount();
+
+        List<Future<Server>> futures = new ArrayList<>();
         for (int i = 0; i < instanceCount; i++) {
-            Server masterServer = createMasterServer(placementGroup, i);
-            serverList.add(masterServer);
+            int finalI = i;
+            if (i == 0) {
+                Server masterServer = createMasterServer(placementGroup, finalI);
+                serverList.add(masterServer);
+            } else {
+                executeInsideSemaphore(semaphore, () -> {
+                    Future<Server> future = VIRTUAL_THREAD_PER_TASK_EXECUTOR.submit(() ->
+                        createMasterServer(placementGroup, finalI)
+                    );
+                    futures.add(future);
+                });
+            }
         }
+        waitAndAddToServerList(serverList, futures);
     }
 
     private Server createMasterServer(PlacementGroup placementGroup, int i) {
@@ -340,4 +371,13 @@ public class CreateCluster {
         }
     }
 
+    private void waitAndAddToServerList(List<Server> serverList, List<Future<Server>> futures) {
+        for (Future<Server> server : futures) {
+            try {
+                serverList.add(server.get());
+            } catch (Throwable throwable) {
+                throw new RuntimeException(throwable);
+            }
+        }
+    }
 }
