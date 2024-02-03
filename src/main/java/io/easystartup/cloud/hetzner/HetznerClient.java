@@ -4,6 +4,7 @@ import io.easystartup.utils.ConsoleColors;
 import io.easystartup.utils.TemplateUtil;
 import me.tomsdevsn.hetznercloud.HetznerCloudAPI;
 import me.tomsdevsn.hetznercloud.objects.general.*;
+import me.tomsdevsn.hetznercloud.objects.pagination.PaginationParameters;
 import me.tomsdevsn.hetznercloud.objects.request.CreateServerRequest;
 import me.tomsdevsn.hetznercloud.objects.request.CreateServerRequestFirewall;
 import me.tomsdevsn.hetznercloud.objects.request.ServerPublicNetRequest;
@@ -35,7 +36,8 @@ public class HetznerClient {
 
     public List<ServerType> getServerTypes() {
         // todo: replace with paginated fetch all server types in upstream package
-        ServerTypesResponse serverTypes = hetznerCloudAPI.getServerTypes();
+        PaginationParameters paginationParameters = new PaginationParameters(0, 500);
+        ServerTypesResponse serverTypes = hetznerCloudAPI.getServerTypes(paginationParameters);
         return serverTypes.getServerTypes();
     }
 
