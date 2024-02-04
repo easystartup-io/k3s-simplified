@@ -30,6 +30,10 @@ public class TemplateUtil {
     public static final String CLUSTER_AUTOSCALER_MANIFEST = "templates/cluster_autoscaler.yaml";
     public static final String CLUSTER_AUTOSCALER_MANIFEST_V2 = "templates/cluster_autoscaler_v2.yaml";
 
+    // Upgrade k3s cluster
+    public static final String UPGRADE_PLAN_MANIFEST_FOR_MASTERS = "templates/upgrade_plan_for_masters.yaml";
+    public static final String UPGRADE_PLAN_MANIFEST_FOR_WORKERS = "templates/upgrade_plan_for_workers.yaml";
+
     public static String getTemplateFile(String file){
         InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
         try {

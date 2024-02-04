@@ -432,4 +432,18 @@ public class ConfigurationLoader {
         settings.setPublicSSHKeyPath(replaceTildaWithFullHomePath(settings.getPublicSSHKeyPath()));
     }
 
+    public void validateUpgradeSettings(String k3SVersion, String newK3sVersion) {
+        List<String> availableReleases = new Releases().availableReleases();
+        if (!availableReleases.contains(k3SVersion)){
+            errors.add("K3s version is not valid in your config file, run `k3s-simplified releases` to see available versions");
+        }
+        if (!availableReleases.contains(newK3sVersion)){
+            errors.add("New K3s version is not valid, run `k3s-simplified releases` to see available versions");
+        }
+        int newK3sIndex = availableReleases.indexOf(newK3sVersion);
+        int existingK3sIndex = availableReleases.indexOf(k3SVersion);
+        if (existingK3sIndex >= newK3sIndex){
+            errors.add("New K3s version should be more recent than existing one, run `k3s-simplified releases` to see available versions");
+        }
+    }
 }

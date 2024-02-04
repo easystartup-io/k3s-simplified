@@ -2,6 +2,7 @@ package io.easystartup;
 
 
 import io.easystartup.configuration.ConfigurationLoader;
+import io.easystartup.configuration.MainSettings;
 import io.easystartup.utils.Releases;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.simple.SimpleLogger;
@@ -128,10 +129,27 @@ public class Main {
 
     @Command(name = "upgrade", description = "# Upgrade a cluster to a new version of k3s")
     public static class UpgradeCluster implements Runnable {
+
+        @CommandLine.Option(names = {"-c", "--config"}, required = true, description = "# The path of the YAML configuration file")
+        private String config;
+
+        @CommandLine.Option(names = {"--new-k3s-version"}, required = true, description = "# The new version of k3s to upgrade to")
+        private String newK3sVersion;
+
         @Override
         public void run() {
             try {
-                System.out.println("Not yet implemented");
+                ConfigurationLoader configurationLoader = new ConfigurationLoader(config);
+                configurationLoader.validate();
+                MainSettings settings = configurationLoader.getSettings();
+                configurationLoader.validateUpgradeSettings(settings.getK3SVersion(), newK3sVersion);
+                for (String error : configurationLoader.getErrors()) {
+                    System.out.println(error);
+                }
+                if (CollectionUtils.isNotEmpty(configurationLoader.getErrors())) {
+                    return;
+                }
+                new io.easystartup.cluster.UpgradeCluster(settings, newK3sVersion, config).upgradeCluster();
             } catch (Throwable throwable) {
                 System.out.println(throwable.getMessage());
             }

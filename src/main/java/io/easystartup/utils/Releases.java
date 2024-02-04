@@ -29,6 +29,10 @@ public class Releases {
     private static final String GITHUB_DELIM_LINKS = ",";
     private static final Pattern GITHUB_LINK_REGEX = Pattern.compile("<(?<link>[^>]+)>; rel=\"(?<rel>[^\"]+)\"");
 
+    /**
+     * Returns in asc sorted order. So index 0 will contain version 1.x.x
+     * and index 10 might contain version 2.x.x
+     * */
     public List<String> availableReleases() {
         try {
             String RELEASES_FILENAME = getReleaseFileName(new Date());
@@ -51,6 +55,11 @@ public class Releases {
         }
     }
 
+    /**
+     * Fetches releases from k3s-io repo from github
+     * And returns in asc sorted order. So index 0 will contain version 1.x.x
+     * and index 10 might contain version 2.x.x
+     * */
     private List<String> fetchAllReleasesFromGithub() throws IOException {
         List<String> releases = new ArrayList<>();
         String nextPageUrl = "https://api.github.com/repos/k3s-io/k3s/tags?per_page=100";
