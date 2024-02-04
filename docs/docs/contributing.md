@@ -8,7 +8,7 @@ title: Contributing
 There are two ways to consume or contribute to this project. Since this is a simple java application, you can install jdk 21 and make changes and compile.
 1. Install intellij idea community edition
 2. Open the build.gradle file as a project
-3. Then to compile just run 
+3. Then to compile just run it after selecing jdk21 as your java version
 
 ## After setup is done, how to run locally
 1. ```./gradlew clean build```
