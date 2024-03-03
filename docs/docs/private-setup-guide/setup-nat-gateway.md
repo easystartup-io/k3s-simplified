@@ -24,7 +24,7 @@ Ensure that the node instance type and location you select is in the same region
 hetzner_token: <token>
 cluster_name: test-k3s
 kubeconfig_path: "./kubeconfig"
-k3s_version: v1.29.0+k3s1
+k3s_version: v1.29.2+k3s1
 public_ssh_key_path: "~/.ssh/hetzner_rsa.pub"
 private_ssh_key_path: "~/.ssh/hetzner_rsa"
 # ... other config items

@@ -11,7 +11,7 @@ k3s-simplified requires a YAML configuration file for cluster operations. Here's
 hetzner_token: <your token>
 cluster_name: test
 kubeconfig_path: "./kubeconfig"
-k3s_version: v1.29.0+k3s1
+k3s_version: v1.29.2+k3s1
 public_ssh_key_path: "~/.ssh/id_rsa.pub"
 private_ssh_key_path: "~/.ssh/id_rsa"
 use_ssh_agent: false # set to true if your key has a passphrase or if SSH connections don't work or seem to hang without agent. See https://github.com/easystartup-io/k3s-simplified#limitations

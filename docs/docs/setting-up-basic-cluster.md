@@ -19,7 +19,7 @@ We'll begin with a [hello-world](https://gist.githubusercontent.com/easystartup-
 hetzner_token: nRTJFfhIGNT..........
 cluster_name: hello-world  # k3s-simplified gives the next names to hosts: hello-world-cx21-master1 / hello-world-cpx21-pool-cpx31-worker1
 kubeconfig_path: "./kubeconfig"  # or /cluster/kubeconfig if you are going to use Docker
-k3s_version: v1.29.0+k3s1
+k3s_version: v1.29.2+k3s1
 public_ssh_key_path: "~/.ssh/id_rsa.pub"
 private_ssh_key_path: "~/.ssh/id_rsa"
 use_ssh_agent: true
