@@ -57,7 +57,7 @@ public class MainSettings {
     @JsonProperty("autoscaling_image_x86")
     private String autoScalingImageX86;
 
-    @JsonProperty("autoscalerVersion")
+    @JsonProperty("autoscaler_version")
     private AutoScalerVersion autoscalerVersion = AutoScalerVersion.v2;
 
     @JsonProperty("additional_packages")
