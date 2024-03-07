@@ -23,10 +23,10 @@ public class MainSettings {
     private String clusterName;
 
     @JsonProperty("kubeconfig_path")
-    private String kubeconfigPath;
+    private String kubeconfigPath = "./kubeconfig";
 
     @JsonProperty("k3s_version")
-    private String k3SVersion;
+    private String k3SVersion = "v1.29.2+k3s1";
 
     @JsonProperty("public_ssh_key_path")
     private String publicSSHKeyPath;
@@ -41,7 +41,7 @@ public class MainSettings {
     private boolean useSSHAgent;
 
     @JsonProperty("ssh_allowed_networks")
-    private String[] sshAllowedNetworks;
+    private String[] sshAllowedNetworks = {"0.0.0.0/0"};
 
     @JsonProperty("image")
     private String image ="ubuntu-22.04";
@@ -67,7 +67,7 @@ public class MainSettings {
     private String snapshotOs ="default";
 
     @JsonProperty("api_allowed_networks")
-    private String[] apiAllowedNetworks;
+    private String[] apiAllowedNetworks =  {"0.0.0.0/0"};
 
     @JsonProperty("private_network_subnet")
     private String privateNetworkSubnet = "10.0.0.0/16";

@@ -343,7 +343,7 @@ public class ConfigurationLoader {
     }
 
     private void validatePublicSSHKey(List<String> errors) {
-        if (isBlank(settings.getHetznerToken())) {
+        if (isBlank(settings.getPublicSSHKeyPath())) {
             errors.add("public_ssh_key_path cannot be blank");
             return;
         }
