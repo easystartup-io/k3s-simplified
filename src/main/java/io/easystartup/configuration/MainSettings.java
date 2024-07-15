@@ -26,7 +26,7 @@ public class MainSettings {
     private String kubeconfigPath = "./kubeconfig";
 
     @JsonProperty("k3s_version")
-    private String k3SVersion = "v1.29.2+k3s1";
+    private String k3SVersion = "v1.30.2+k3s2";
 
     @JsonProperty("public_ssh_key_path")
     private String publicSSHKeyPath;
@@ -124,10 +124,10 @@ public class MainSettings {
     private boolean scheduleWorkloadsOnMasters;
 
     @JsonProperty("cloud_controller_manager_manifest_url")
-    private String cloudControllerManagerManifestURL = "https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.19.0/ccm-networks.yaml";
+    private String cloudControllerManagerManifestURL = "https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.20.0/ccm-networks.yaml";
 
     @JsonProperty("csi_driver_manifest_url")
-    private String csiDriverManifestURL = "https://raw.githubusercontent.com/hetznercloud/csi-driver/v2.6.0/deploy/kubernetes/hcloud-csi.yml";
+    private String csiDriverManifestURL = "https://raw.githubusercontent.com/hetznercloud/csi-driver/v2.8.0/deploy/kubernetes/hcloud-csi.yml";
 
     @JsonProperty("system_upgrade_controller_manifest_url")
     private String systemUpgradeControllerManifestURL = "https://raw.githubusercontent.com/rancher/system-upgrade-controller/master/manifests/system-upgrade-controller.yaml";
