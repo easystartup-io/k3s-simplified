@@ -68,7 +68,7 @@ For autoscaling nodes I have used the official kubernetes [Cluster Autoscaler fo
     ```
 
     :::warning
-    If you dont specify the above images, the default fallback order is `autoscaling_image` -> `image` -> `ubuntu-22.04`
+    If you dont specify the above images, the default fallback order is `autoscaling_image` -> `image` -> `ubuntu-24.04`
     :::
 
     There is a limitation in the official hetzner kuberentes controller where you cannot set custom images for each autoscaled node group. Currently you can only only set a default image for all arm instances and all x86 instances. In the future when support will be added, this tool will also use the image present in the node pool.

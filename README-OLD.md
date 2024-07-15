@@ -56,7 +56,7 @@ schedule_workloads_on_masters: false
 # cluster_dns: 10.43.0.10 # optional: IPv4 Cluster IP for coredns service. Needs to be an address from the service_cidr range
 # enable_public_net_ipv4: false # default is true
 # enable_public_net_ipv6: false # default is true
-# image: rocky-9 # optional: default is ubuntu-22.04
+# image: rocky-9 # optional: default is ubuntu-24.04
 # autoscaling_image: 103908130 # optional, defaults to the `image` setting
 # snapshot_os: microos # otional: specified the os type when using a custom snapshot
 cloud_controller_manager_manifest_url: "https://github.com/hetznercloud/hcloud-cloud-controller-manager/releases/download/v1.18.0/ccm-networks.yaml"
@@ -166,10 +166,10 @@ information and instructions.
 
 ### Using alternative OS images
 
-By default, the image in use is `ubuntu-22.04` for all the nodes, but you can specify a different default image with the
+By default, the image in use is `ubuntu-24.04` for all the nodes, but you can specify a different default image with the
 root level `image` config option or even different images for different static node pools by setting the `image` config
 option in each node pool. This way you can, for example, have some node pools with ARM instances use the correct OS
-image for ARM. To do this and use say Ubuntu 22.04 on ARM instances, set `image` to `103908130` with a specific image
+image for ARM. To do this and use say Ubuntu 24.04 on ARM instances, set `image` to `103908130` with a specific image
 ID. With regard to autoscaling, due to a limitation in the Cluster Autoscaler for Hetzner it is not possible yet to
 specify a different image for each autoscaled pool, so for now you can specify the image for all autoscaled pools by
 setting the `autoscaling_image` setting if you want to use an image different from the one specified in `image`.

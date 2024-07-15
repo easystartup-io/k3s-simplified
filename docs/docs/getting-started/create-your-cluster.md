@@ -31,7 +31,7 @@ disable_flannel: false # set to true if you want to install a different CNI
 # private_api_load_balancer: true # default is false, if you want to use a private api load balancer, ensure that its accessible from where you are running executing this config 
 # api_server_hostname: testcluster.example.com # DNS for the k8s API LoadBalancer. Only enable after you have run the create command at least once and done the dns mapping to the private ip or public ip of the load balancer . Else the kubectl command will dns timeout
 
-# image: rocky-9 # optional: default is ubuntu-22.04
+# image: rocky-9 # optional: default is ubuntu-24.04
 
 # autoscaling_image: #deprecated, instead use the below two options # 103908130 # defaults to the `image` setting
 

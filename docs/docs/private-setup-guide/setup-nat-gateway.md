@@ -37,7 +37,7 @@ natGatewayConfig:
 // highlight-end
 ```
 :::info
-Currently only ubuntu 22.04 based nat-gateway can be created, because the installation scripts are only supported for it. For other env please create your own nat gateway or please help in contributing.
+Currently only ubuntu 24.04 based nat-gateway can be created, because the installation scripts are only supported for it. For other env please create your own nat gateway or please help in contributing.
 :::
 
 ### 2. Run the command to create the access box

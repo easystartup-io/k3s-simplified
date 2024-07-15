@@ -44,7 +44,7 @@ public class MainSettings {
     private String[] sshAllowedNetworks = {"0.0.0.0/0"};
 
     @JsonProperty("image")
-    private String image ="ubuntu-22.04";
+    private String image ="ubuntu-24.04";
 
     // Deprecated, only for use with v1
     @JsonProperty("autoscaling_image")
