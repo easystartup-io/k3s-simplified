@@ -6,8 +6,7 @@ sidebar_position: 2
 
 k3s-simplified requires a YAML configuration file for cluster operations. Here's an example template (with optional settings commented):
 
-```yaml
----
+```yaml title="cluster_config.yaml"
 hetzner_token: <your token>
 cluster_name: test
 kubeconfig_path: "./kubeconfig"

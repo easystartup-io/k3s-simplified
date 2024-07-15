@@ -15,7 +15,7 @@ We'll begin with a [hello-world](https://gist.githubusercontent.com/easystartup-
 3. Download `k3s-simplified`: [Getting Started Guide](https://k3s-simplified.easystartup.io/docs/getting-started/installation#installation-guide).
 4. Create a `cluster_config.yaml` file using the configuration provided below. This configuration sets up a High Availability (HA) cluster with 3 master nodes and 3 worker nodes. You can opt for a smaller setup (1 master + 1 worker) for testing purposes:
 
-```yaml
+```yaml title="cluster_config.yaml"
 hetzner_token: nRTJFfhIGNT..........
 cluster_name: hello-world  # k3s-simplified gives the next names to hosts: hello-world-cx21-master1 / hello-world-cpx21-pool-cpx31-worker1
 kubeconfig_path: "./kubeconfig"  # or /cluster/kubeconfig if you are going to use Docker
@@ -57,7 +57,7 @@ Store all configurations in a specific folder to avoid repeatedly running `kubec
 7. Create a new file: `touch ingress-nginx-annotations.yaml`.
 8. Open and edit the new file: `nano ingress-nginx-annotations.yaml`.
 
-```yaml
+```yaml title="ingress-nginx-annotations.yaml"
 # INSTALLATION
 # 1. Install Helm: https://helm.sh/docs/intro/install/
 # 2. Add ingress-nginx help repo: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -134,8 +134,7 @@ To uninstall ingress-nginx and associated Hetzner load balancer: `helm uninstall
 14. Download the hello-world application: `curl [hello-world URL] --output hello-world.yaml`.
 15. Modify `hello-world.yaml` to include annotations and Hetzner's Load Balancer IP.
 
-```yaml
----
+```yaml title="hello-world.yaml"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -159,7 +158,7 @@ For LetsEncrypt SSL:
 19. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
 20. Add content to just created file: `nano ingress-nginx-configmap.yaml`
 
-```yaml
+```yaml title="ingress-nginx-configmap.yaml"
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -185,7 +184,7 @@ cert-manager jetstack/cert-manager
 
 25. Create and apply the `lets-encrypt.yaml` file:
 
-```yaml
+```yaml title="lets-encrypt.yaml"
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -206,7 +205,7 @@ spec:
 26. Apply file: `kubectl apply -f ./lets-encrypt.yaml`
 27. Change `nano hello-world.yaml`:
 
-```yaml
+```yaml title="hello-world.yaml"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -245,7 +244,7 @@ In case if you need to have just 1 master node, there will be just 1 Hetzner's l
 
 #### 2. Can we use "rules" block of ingress-nginx (the one which Kubernetes uses as a LoadBalancer) instead of creating our own "per-app" ingress as well as cert-manager like shown below
 
-```yaml
+```yaml title="hello-world.yaml"
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
