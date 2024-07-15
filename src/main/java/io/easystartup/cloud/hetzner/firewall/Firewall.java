@@ -141,7 +141,8 @@ public class Firewall {
         firewallRules.add(allowICMPPing(null));
         firewallRules.add(allowAllTrafficBetweenNodes(privateNetworkSubnet));
         firewallRules.add(allowUDPBetweenNodes(privateNetworkSubnet));
-        if (highAvailability) {
+        if (!highAvailability) {
+            // Rule for allowing port 6443 (Kubernetes API server)
             firewallRules.add(allowKubernetesAPI(apiAllowedNetworks));
         }
         return firewallRules;
