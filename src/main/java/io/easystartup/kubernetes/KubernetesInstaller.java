@@ -120,9 +120,17 @@ public class KubernetesInstaller {
     }
 
     private void setUpFirstMaster(Server firstMaster) {
-        System.out.println("Deploying k3s to first master " + firstMaster.getName() + "...");
 
+        System.out.println("Checking if k3s already setup");
         Triple<String, Server, Integer> tokenVsServerVsServerIndex = getK3sTokenByFallingBackToDifferentMasters();
+        if (tokenVsServerVsServerIndex.getMiddle() != null) {
+            System.out.println("Found existing master server with token " + tokenVsServerVsServerIndex.getRight());
+        } else {
+            System.out.println("No existing master server exists with token");
+        }
+        System.out.println("... Finished checking if k3s already setup");
+
+        System.out.println("\nDeploying k3s to first master " + firstMaster.getName() + "...");
         Integer masterServerIndex = tokenVsServerVsServerIndex.getRight();
         String k3sTokenByFallingBackToDifferentMasters = tokenVsServerVsServerIndex.getLeft();
         boolean clusterDoingInit = true;

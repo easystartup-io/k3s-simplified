@@ -38,7 +38,7 @@ public class Util {
 
     public static void checkKubectl() {
         if (!isExecutableAvailable("kubectl")) {
-            System.out.println("Please ensure kubectl is installed and in your PATH.");
+            System.out.println("Please ensure kubectl is installed and in your PATH. On your local pc where you are running this create command");
             System.exit(1);
         }
     }
