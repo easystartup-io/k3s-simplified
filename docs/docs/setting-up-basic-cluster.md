@@ -151,16 +151,9 @@ spec:
   ....
 ```
 
-14. Deploy the hello-world app: `kubectl apply -f hello-world.yaml`
-15. Test the application at `http://hello-world.IP_FROM_STEP_13.nip.io`. You should see the RANCHER Hello world! page.
-"host.IP_FROM_STEP_13.nip.io" (the key part is ".nip.io") is just a quick way to test things without configuring DNS (a query to a hostname ending in nip.io simply returns the IP address it finds in the hostname itself).
+14. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
 
-16. For connecting a real domain, assign the IP from step 13 to your domain in the DNS registrar of your domain, and modify `- host: hello-world.IP_FROM_STEP_13.nip.io` in `hello-world.yaml` to use `- host: yourDomain.com`. Apply the changes `kubectl apply -f hello-world.yaml and wait 1-30mins for DNS update.
-
-For LetsEncrypt SSL:
-
-17. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
-18. Add content to just created file: `nano ingress-nginx-configmap.yaml`
+15. Add content to just created file: `nano ingress-nginx-configmap.yaml`
 
 ```yaml title="ingress-nginx-configmap.yaml"
 apiVersion: v1
@@ -173,7 +166,15 @@ data:
   use-proxy-protocol: "true"
 ```
 
-19. Apply the config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`
+16. Apply the config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`
+17. Deploy the hello-world app: `kubectl apply -f hello-world.yaml`
+18. Test the application at `http://hello-world.IP_FROM_STEP_13.nip.io`. You should see the RANCHER Hello world! page.
+"host.IP_FROM_STEP_13.nip.io" (the key part is ".nip.io") is just a quick way to test things without configuring DNS (a query to a hostname ending in nip.io simply returns the IP address it finds in the hostname itself).
+
+19. For connecting a real domain, assign the IP from step 13 to your domain in the DNS registrar of your domain, and modify `- host: hello-world.IP_FROM_STEP_13.nip.io` in `hello-world.yaml` to use `- host: yourDomain.com`. Apply the changes `kubectl apply -f hello-world.yaml and wait 1-30mins for DNS update.
+
+For LetsEncrypt SSL:
+
 20. Add the LetsEncrypt Helm repository: `helm repo add jetstack https://charts.jetstack.io`
 21. Update local chart information: `helm repo update`
 22. Install LetsEncrypt certificate issuer:
