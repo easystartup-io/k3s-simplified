@@ -113,8 +113,6 @@ controller:
       load-balancer.hetzner.cloud/http-redirect-https: 'false'
 ```
 
-9. Add ingress-nginx repository: `helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx`.
-10. Update local chart information: `helm repo update`.
 11. Install ingress-nginx:
 
 ```bash
