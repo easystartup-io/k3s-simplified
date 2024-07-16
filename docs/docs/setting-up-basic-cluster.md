@@ -118,11 +118,10 @@ controller:
 11. Install ingress-nginx:
 
 ```bash
-helm upgrade --install \
-ingress-nginx ingress-nginx/ingress-nginx \
--f ~/.kube/ingress-nginx-annotations.yaml \
---namespace ingress-nginx \
---create-namespace
+helm upgrade --install ingress-nginx ingress-nginx \
+-f ./ingress-nginx-annotations.yaml \
+--repo https://kubernetes.github.io/ingress-nginx \
+--namespace ingress-nginx --create-namespace
 ```
 
 :::warning
