@@ -47,15 +47,15 @@ worker_node_pools:
     max_instances: 3
 ```
 
-5. Use `k3s-simplified` to create the cluster: `k3s-simplified create --config cluster_config.yaml`.
+5. Use `k3s-simplified` to create the cluster: `k3s-simplified create --config cluster_config.yaml`
 6. `k3s-simplified` will generate a `kubeconfig` file in the tool's run directory. To access your cluster with `kubectl` (installed in step 1), either move the `kubeconfig` file to `~/.kube/config` or set the environment variable `export KUBECONFIG=./kubeconfig`.
 
 :::tip
 Store all configurations in a specific folder to avoid repeatedly running `kubectl apply ...`. Use `kubectl apply -f /path/to/configs/ -R`.
 :::
 
-7. Create a new file: `touch ingress-nginx-annotations.yaml`.
-8. Open and edit the new file: `nano ingress-nginx-annotations.yaml`.
+7. Create a new file: `touch ingress-nginx-annotations.yaml`
+8. Open and edit the new file: `nano ingress-nginx-annotations.yaml`
 
 ```yaml title="ingress-nginx-annotations.yaml"
 # INSTALLATION
@@ -113,7 +113,7 @@ controller:
       load-balancer.hetzner.cloud/http-redirect-https: 'false'
 ```
 
-11. Install ingress-nginx:
+9. Install ingress-nginx:
 
 ```bash
 helm upgrade --install ingress-nginx ingress-nginx \
@@ -126,7 +126,7 @@ helm upgrade --install ingress-nginx ingress-nginx \
 To uninstall ingress-nginx and associated Hetzner load balancer: `helm uninstall ingress-nginx -n ingress-nginx`. This will delete current Hetzner's load balancer as a result when you install a new ingress controller, new Hetzner's load balancer will be created with a new public IP address.
 :::
 
-12. Verify that "EXTERNAL-IP" is assigned (not "pending"): `kubectl get svc -n ingress-nginx`.
+10. Verify that "EXTERNAL-IP" is assigned (not "pending"): `kubectl get svc -n ingress-nginx`.
 
 :::tip
 If your EXTERNAL-IP is still in pending state even after a few minutes. Please describe the svc to check the error
@@ -134,9 +134,9 @@ If your EXTERNAL-IP is still in pending state even after a few minutes. Please d
 Check if you have replaced `ingress-nginx-annotations.yaml` with your appropriate domain name
 :::
 
-13. In Hetzner's cloud console, locate the PUBLIC IP associated with `WORKERS_LOAD_BALANCER_NAME` from the `load-balancer.hetzner.cloud/name` annotation.
-14. Download the hello-world application: `curl https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml --output hello-world.yaml`.
-15. Modify `hello-world.yaml` to include annotations and Hetzner's Load Balancer IP.
+11. In Hetzner's cloud console, locate the PUBLIC IP associated with `WORKERS_LOAD_BALANCER_NAME` from the `load-balancer.hetzner.cloud/name` annotation.
+12. Download the hello-world application: `curl https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml --output hello-world.yaml`
+13. Modify `hello-world.yaml` to include annotations and Hetzner's Load Balancer IP.
 
 ```yaml title="hello-world.yaml"
 apiVersion: networking.k8s.io/v1
@@ -151,16 +151,16 @@ spec:
   ....
 ```
 
-16. Deploy the hello-world app: `kubectl apply -f hello-world.yaml`.
-17. Test the application at `http://hello-world.IP_FROM_STEP_13.nip.io`. You should see the RANCHER Hello world! page.
+14. Deploy the hello-world app: `kubectl apply -f hello-world.yaml`
+15. Test the application at `http://hello-world.IP_FROM_STEP_13.nip.io`. You should see the RANCHER Hello world! page.
 "host.IP_FROM_STEP_13.nip.io" (the key part is ".nip.io") is just a quick way to test things without configuring DNS (a query to a hostname ending in nip.io simply returns the IP address it finds in the hostname itself).
 
-18. For connecting a real domain, assign the IP from step 13 to your domain in the DNS registrar of your domain, and modify `- host: hello-world.IP_FROM_STEP_13.nip.io` in `hello-world.yaml` to use `- host: yourDomain.com`. Apply the changes `kubectl apply -f hello-world.yaml and wait 1-30mins for DNS update.
+16. For connecting a real domain, assign the IP from step 13 to your domain in the DNS registrar of your domain, and modify `- host: hello-world.IP_FROM_STEP_13.nip.io` in `hello-world.yaml` to use `- host: yourDomain.com`. Apply the changes `kubectl apply -f hello-world.yaml and wait 1-30mins for DNS update.
 
 For LetsEncrypt SSL:
 
-19. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
-20. Add content to just created file: `nano ingress-nginx-configmap.yaml`
+17. `load-balancer.hetzner.cloud/uses-proxyprotocol: "true"` annotation requires `use-proxy-protocol: "true"` for ingress-nginx, so let's create file: `touch ingress-nginx-configmap.yaml`
+18. Add content to just created file: `nano ingress-nginx-configmap.yaml`
 
 ```yaml title="ingress-nginx-configmap.yaml"
 apiVersion: v1
@@ -173,10 +173,10 @@ data:
   use-proxy-protocol: "true"
 ```
 
-21. Apply the config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`.
-22. Add the LetsEncrypt Helm repository: `helm repo add jetstack https://charts.jetstack.io`.
-23. Update local chart information: `helm repo update`.
-24. Install LetsEncrypt certificate issuer:
+19. Apply the config map: `kubectl apply -f ./ingress-nginx-configmap.yaml`
+20. Add the LetsEncrypt Helm repository: `helm repo add jetstack https://charts.jetstack.io`
+21. Update local chart information: `helm repo update`
+22. Install LetsEncrypt certificate issuer:
 
 ```bash
 helm upgrade --install \
@@ -186,7 +186,7 @@ helm upgrade --install \
 cert-manager jetstack/cert-manager
 ```
 
-25. Create and apply the `lets-encrypt.yaml` file:
+23. Create and apply the `lets-encrypt.yaml` file:
 
 ```yaml title="lets-encrypt.yaml"
 apiVersion: cert-manager.io/v1
@@ -206,8 +206,8 @@ spec:
           class: nginx
 ```
 
-26. Apply file: `kubectl apply -f ./lets-encrypt.yaml`
-27. Change `nano hello-world.yaml`:
+24. Apply file: `kubectl apply -f ./lets-encrypt.yaml`
+25. Change `nano hello-world.yaml`:
 
 ```yaml title="hello-world.yaml"
 apiVersion: networking.k8s.io/v1
@@ -229,7 +229,7 @@ spec:
   ....
 ```
 
-27. Apply the updated hello-world application: `kubectl apply -f ./hello-world.yaml`.
+26. Apply the updated hello-world application: `kubectl apply -f ./hello-world.yaml`
 
 The instructions are based on the README and [a specific GitHub discussion](https://github.com/vitobotta/hetzner-k3s/issues/13#issuecomment-901857297).
 
