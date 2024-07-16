@@ -127,8 +127,15 @@ To uninstall ingress-nginx and associated Hetzner load balancer: `helm uninstall
 :::
 
 12. Verify that "EXTERNAL-IP" is assigned (not "pending"): `kubectl get svc -n ingress-nginx`.
+
+:::tip
+If your EXTERNAL-IP is still in pending state even after a few minutes. Please describe the svc to check the error
+`kubectl describe svc ingress-nginx-controller -n ingress-nginx` .
+Check if you have replaced `ingress-nginx-annotations.yaml` with your appropriate domain name
+:::
+
 13. In Hetzner's cloud console, locate the PUBLIC IP associated with `WORKERS_LOAD_BALANCER_NAME` from the `load-balancer.hetzner.cloud/name` annotation.
-14. Download the hello-world application: `curl [hello-world URL] --output hello-world.yaml`.
+14. Download the hello-world application: `curl https://gist.githubusercontent.com/easystartup-io/448806b952b06f5053e3c1a731f470d5/raw/df9acc2ad49960afc4a396853fce1231f7ceed02/hello-world.yaml --output hello-world.yaml`.
 15. Modify `hello-world.yaml` to include annotations and Hetzner's Load Balancer IP.
 
 ```yaml title="hello-world.yaml"
