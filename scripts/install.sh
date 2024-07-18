@@ -36,13 +36,14 @@ else
 fi
 
 DOWNLOAD_URL="${DOWNLOAD_URL}_hotspot_21.0.1_12.tar.gz"
+echo "JDK Download URL: " + $DOWNLOAD_URL
 
 # Check if Java is already installed
 if [ -d "${JAVA_DIRECTORY}/k3s-simplified-java" ]; then
     echo "Java is already installed."
 else
     echo "Downloading Eclipse JRE 21..."
-    wget -O --backups=0 openjre-21.tar.gz $DOWNLOAD_URL
+    wget -O openjre-21.tar.gz $DOWNLOAD_URL
 
     mkdir -p bundled-jre
 
